@@ -235,7 +235,7 @@ class _DashboardPageState extends State<DashboardPage> {
         ),
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
-        itemCount: 16,
+        itemCount: 8,
         itemBuilder: (_, i) => SizedBox(
           width: cellSize,
           height: cellSize,

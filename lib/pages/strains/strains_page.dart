@@ -5,7 +5,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'strain_detail_page.dart';
 import '../excel_import_page.dart';
-import 'dart:io' show Platform;
+import 'package:excel/excel.dart' hide Border;
+import 'package:path_provider/path_provider.dart';
+import 'package:open_filex/open_filex.dart';
+import 'package:share_plus/share_plus.dart';
+import 'dart:io';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Design tokens
@@ -29,7 +33,6 @@ class _DS {
   static const Color soonRowBg    = Color(0xFFFFFBEB);
 
   static const Color cellBorder  = Color(0xFFE2E8F0);
-  static const Color readOnlyBg  = Color(0xFFFAFAFA);
   static const Color blockedBg   = Color(0xFFFFF1F2);
   static const Color blockedText = Color(0xFFEF4444);
 
@@ -43,7 +46,7 @@ class _DS {
   );
   static const TextStyle cellStyle = TextStyle(fontSize: 12, color: Color(0xFF334155));
   static const TextStyle readOnlyStyle = TextStyle(
-    fontSize: 12, color: Color(0xFFAEB8C2), fontStyle: FontStyle.italic,
+    fontSize: 12, color: Color(0xFFAEB8C2),
   );
 }
 
@@ -95,22 +98,22 @@ const List<StrainColDef> _allColumns = [
   StrainColDef('isolation_date',     'Isolation Date',        width: 120),
   StrainColDef('deposit_date',       'Deposit Date',          width: 120),
   StrainColDef('other_names',        'Other Names',           width: 140),
-  StrainColDef('seq_16s_bp',      '16S (bp)',             width: 90,  onlyFor: {'prokaryote'}),
-  StrainColDef('its',             'ITS',                  width: 80,  onlyFor: {'prokaryote'}),
-  StrainColDef('its_bands',       'ITS Bands',            width: 160, onlyFor: {'prokaryote'}),
-  StrainColDef('cloned_gel',      'Cloned/GelExtraction', width: 170, onlyFor: {'prokaryote'}),
-  StrainColDef('genbank_16s_its', 'GenBank (16S+ITS)',    width: 160, onlyFor: {'prokaryote'}),
-  StrainColDef('genbank_status',  'GenBank Status',       width: 130, onlyFor: {'prokaryote'}),
-  StrainColDef('genome_pct',      'Genome (%)',           width: 100, onlyFor: {'prokaryote'}),
-  StrainColDef('genome_cont',     'Genome (Cont.)',       width: 130, onlyFor: {'prokaryote'}),
-  StrainColDef('genome_16s',      'Genome (16S)',         width: 120, onlyFor: {'prokaryote'}),
-  StrainColDef('gca_accession',   'GCA Accession',        width: 130, onlyFor: {'prokaryote'}),
-  StrainColDef('seq_18s_bp',    '18S (bp)',        width: 90,  onlyFor: {'eukaryote'}),
-  StrainColDef('genbank_18s',   'GenBank (18S)',   width: 130, onlyFor: {'eukaryote'}),
-  StrainColDef('its2_bp',       'ITS2 (bp)',       width: 90,  onlyFor: {'eukaryote'}),
-  StrainColDef('genbank_its2',  'GenBank (ITS2)',  width: 130, onlyFor: {'eukaryote'}),
-  StrainColDef('rbcl_bp',       'rbcL (bp)',       width: 90,  onlyFor: {'eukaryote'}),
-  StrainColDef('genbank_rbcl',  'GenBank (rbcL)',  width: 130, onlyFor: {'eukaryote'}),
+  StrainColDef('seq_16s_bp',      '16S (bp)',             width: 90,),
+  StrainColDef('its',             'ITS',                  width: 80,),
+  StrainColDef('its_bands',       'ITS Bands',            width: 160,),
+  StrainColDef('cloned_gel',      'Cloned/GelExtraction', width: 170,),
+  StrainColDef('genbank_16s_its', 'GenBank (16S+ITS)',    width: 160,),
+  StrainColDef('genbank_status',  'GenBank Status',       width: 130,),
+  StrainColDef('genome_pct',      'Genome (%)',           width: 100,),
+  StrainColDef('genome_cont',     'Genome (Cont.)',       width: 130,),
+  StrainColDef('genome_16s',      'Genome (16S)',         width: 120,),
+  StrainColDef('gca_accession',   'GCA Accession',        width: 130,),
+  StrainColDef('seq_18s_bp',    '18S (bp)',        width: 90,),
+  StrainColDef('genbank_18s',   'GenBank (18S)',   width: 130,),
+  StrainColDef('its2_bp',       'ITS2 (bp)',       width: 90,),
+  StrainColDef('genbank_its2',  'GenBank (ITS2)',  width: 130,),
+  StrainColDef('rbcl_bp',       'rbcL (bp)',       width: 90,),
+  StrainColDef('genbank_rbcl',  'GenBank (rbcL)',  width: 130,),
   StrainColDef('s_rebeca',      'Sample REBECA',       width: 130, readOnly: true),
   StrainColDef('s_ccpi',        'Sample CCPI',          width: 110, readOnly: true),
   StrainColDef('s_date',        'Sample Date',          width: 110, readOnly: true),
@@ -637,18 +640,72 @@ class _StrainsPageState extends State<StrainsPage> {
     _snack('Copied ${rows.length} row(s) × ${cols.length} col(s)');
   }
 
-  Future<void> _exportSelectedToCSV() async {
-    final rows = _selectedRows; final cols = _exportCols;
-    if (rows.isEmpty) { _snack('Select at least one row'); return; }
-    final buf = StringBuffer()..writeln(cols.map((c) => '"${c.label}"').join(','));
-    for (final row in rows) buf.writeln(cols.map((c) => '"${(row[c.key]?.toString() ?? '').replaceAll('"', '""')}"').join(','));
-    await Clipboard.setData(ClipboardData(text: buf.toString()));
-    _snack('CSV copied — ${rows.length} rows × ${cols.length} cols');
+  Future<void> _exportSelectedToExcel() async {
+    final rows = _selectedRows;
+    final cols = _exportCols;
+
+    if (rows.isEmpty) {
+      _snack('Select at least one row');
+      return;
+    }
+
+    // 1️⃣ Create Excel
+    final excel = Excel.createExcel();
+    final sheet = excel['Sheet1'];
+
+    // 2️⃣ Header
+    for (int c = 0; c < cols.length; c++) {
+      sheet
+          .cell(CellIndex.indexByColumnRow(columnIndex: c, rowIndex: 0))
+          .value = TextCellValue(cols[c].label);
+    }
+
+    // 3️⃣ Data
+    for (int r = 0; r < rows.length; r++) {
+      final row = rows[r];
+
+      for (int c = 0; c < cols.length; c++) {
+        final value = row[cols[c].key];
+
+        sheet
+            .cell(CellIndex.indexByColumnRow(columnIndex: c, rowIndex: r + 1))
+            .value = _toCellValue(value);
+      }
+    }
+
+    // 4️⃣ Save file
+    final dir = await getTemporaryDirectory();
+    final filePath = '${dir.path}/strains_export_${DateTime.now().toIso8601String()}.xlsx';
+
+    final fileBytes = excel.encode();
+    final file = File(filePath)
+      ..createSync(recursive: true)
+      ..writeAsBytesSync(fileBytes!);
+
+    // 5️⃣ Open with Excel (or compatible app)
+    await OpenFilex.open(filePath);
+
+    _snack('Excel exported (${rows.length} rows)');
   }
 
-  Future<void> _exportSelectedToExcel() async => _snack('Excel export for ${_selectedRows.length} row(s) — implement with Excel library');
-  Future<void> _emailSelected()         async => _snack('Email with ${_selectedRows.length} strain(s), ${_exportCols.length} cols (requires url_launcher)');
   Future<void> _printStrains()          async => _snack('Print — implement with the "printing" package');
+
+CellValue _toCellValue(dynamic value) {
+  if (value == null) return TextCellValue('');
+
+  if (value is int) return IntCellValue(value);
+  if (value is double) return DoubleCellValue(value);
+  if (value is bool) return BoolCellValue(value);
+  if (value is DateTime) {
+    return DateCellValue(
+      year: value.year,
+      month: value.month,
+      day: value.day,
+    );
+  }
+
+  return TextCellValue(value.toString());
+}
 
   Future<void> _showAddStrainDialog({dynamic preselectedSampleId}) async {
     List<Map<String, dynamic>> samples = [];
@@ -806,10 +863,8 @@ class _StrainsPageState extends State<StrainsPage> {
                label: allColsSel ? 'All cols ✓' : 'All cols', fn: _selectAllCols),
         // Vertical divider — explicit Container avoids AppBar height conflicts
         Center(child: Container(width: 1, height: 22, margin: const EdgeInsets.symmetric(horizontal: 4), color: Colors.white24)),
-        selBtn(icon: Icons.copy_rounded,        tooltip: 'Copy',         label: 'Copy',  fn: _copySelectedInfo),
-        selBtn(icon: Icons.table_chart_outlined, tooltip: 'Export CSV',   label: 'CSV',   fn: _exportSelectedToCSV),
-        selBtn(icon: Icons.grid_on_rounded,      tooltip: 'Export Excel', label: 'Excel', fn: _exportSelectedToExcel),
-        selBtn(icon: Icons.email_outlined,       tooltip: 'Email',        label: 'Email', fn: _emailSelected),
+        selBtn(icon: Icons.copy_rounded,        tooltip: 'Copy to Clipboard',         label: 'Copy to Clipboard',  fn: _copySelectedInfo),
+        selBtn(icon: Icons.grid_on_rounded,      tooltip: 'Export to Excel', label: 'Export to Excel', fn: _exportSelectedToExcel),
         const SizedBox(width: 4),
       ],
     );
@@ -1300,7 +1355,6 @@ class _StrainsPageState extends State<StrainsPage> {
     // Cell background: only read-only/blocked get a different shade. Status = no special bg.
     Color cellBg;
     if (blocked)         cellBg = _DS.blockedBg;
-    else if (isReadOnly) cellBg = _DS.readOnlyBg;
     else                 cellBg = cellBase;
 
     return GestureDetector(
