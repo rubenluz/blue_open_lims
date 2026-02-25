@@ -41,17 +41,17 @@ class _SetAdminLoginPageState extends State<SetAdminLoginPage> {
       if (res.user == null) throw Exception('Sign-up failed — check your Supabase Auth settings.');
 
       await supabase.from('users').upsert({
-        'username': email,
-        'email': email,
-        'role': 'superadmin',
-        'status': 'active',
-      }, onConflict: 'username');
+        'user_username': email,
+        'user_email': email,
+        'user_role': 'superadmin',
+        'user_status': 'active',
+      }, onConflict: 'user_username');
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Admin account created! Welcome.')),
       );
-      Navigator.pushReplacementNamed(context, '/dashboard');
+      Navigator.pushReplacementNamed(context, '/menu');
     } on AuthException catch (e) {
       _snack('Auth error: ${e.message}');
     } catch (e) {
@@ -82,7 +82,7 @@ class _SetAdminLoginPageState extends State<SetAdminLoginPage> {
                 Icon(Icons.biotech, size: 56, color: colorScheme.primary),
                 const SizedBox(height: 12),
                 const Text(
-                  'Culture Collection Manager',
+                  'Blue Open LIMS',
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 24),

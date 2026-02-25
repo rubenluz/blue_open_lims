@@ -45,9 +45,9 @@ class _SetAdminPasswordPageState extends State<SetAdminPasswordPage> {
 
       // Insert metadata in users table
       await supabase.from('users').upsert({
-        'username': 'admin',
-        'role': 'superadmin',
-      }, onConflict: 'username');
+        'user_username': 'admin',
+        'user_role': 'superadmin',
+      }, onConflict: 'user_username');
 
       if (!mounted) return;
       Navigator.pushReplacementNamed(context, '/login');

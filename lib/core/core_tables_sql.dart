@@ -622,4 +622,15 @@ CREATE INDEX IF NOT EXISTS idx_audit_user              ON audit_log(audit_user_i
 INSERT INTO app_meta (meta_initialized, meta_version)
 VALUES (true, '1.0')
 ON CONFLICT DO NOTHING;
+
+create or replace function get_public_tables()
+returns table(table_name text)
+language sql
+security definer
+as \$div\$  -- Escapado com \
+  select table_name::text
+  from information_schema.tables
+  where table_schema = 'public'
+    and table_type = 'BASE TABLE';
+\$div\$;
 ''';

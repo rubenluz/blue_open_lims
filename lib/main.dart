@@ -81,7 +81,7 @@ class _StartupPageState extends State<StartupPage> {
         return;
       }
       // Session expired or Supabase token gone → go to login (connection already restored)
-      if (mounted) Navigator.pushReplacementNamed(context, '/login');
+      if (mounted) Navigator.pushReplacementNamed(context, '/connections');
       return;
     }
 

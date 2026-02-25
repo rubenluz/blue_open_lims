@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../core/core_tables_sql.';
+import '../core/core_tables_sql.dart';
 import '../core/supabase_manager.dart';
 
 class SetupPage extends StatefulWidget {
@@ -32,15 +32,16 @@ class _SetupPageState extends State<SetupPage> {
       if (ready) {
         final adminExists = await SupabaseManager.adminExists();
         if (!mounted) return;
-        if (!adminExists) {
-          Navigator.pushReplacementNamed(context, '/set_admin_login');
-        } else {
-          Navigator.pushReplacementNamed(context, '/login');
-        }
+        Navigator.pushReplacementNamed(
+          context,
+          adminExists ? '/login' : '/set_admin_login',
+        );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Tables not found yet. Run the SQL in Supabase SQL Editor, then try again.'),
+            content: Text(
+              'Tables not found yet. Run the SQL in Supabase SQL Editor, then try again.',
+            ),
             duration: Duration(seconds: 4),
           ),
         );
@@ -58,12 +59,22 @@ class _SetupPageState extends State<SetupPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Setup Database')),
+      appBar: AppBar(
+        title: const Text('Setup Database'),
+        // ── Back to connections ──────────────────────────────
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          tooltip: 'Back to connections',
+          onPressed: () =>
+              Navigator.pushReplacementNamed(context, '/connections'),
+        ),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // ── Info card ──────────────────────────────────────
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(16),
@@ -71,10 +82,12 @@ class _SetupPageState extends State<SetupPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(children: [
-                      Icon(Icons.info_outline, color: Theme.of(context).colorScheme.primary),
+                      Icon(Icons.info_outline,
+                          color: Theme.of(context).colorScheme.primary),
                       const SizedBox(width: 8),
                       const Text('Database not initialized',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 16)),
                     ]),
                     const SizedBox(height: 8),
                     const Text(
@@ -86,22 +99,29 @@ class _SetupPageState extends State<SetupPage> {
               ),
             ),
             const SizedBox(height: 16),
+
+            // ── SQL viewer ─────────────────────────────────────
             Expanded(
               child: Container(
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                  color: Theme.of(context)
+                      .colorScheme
+                      .surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 padding: const EdgeInsets.all(12),
                 child: SingleChildScrollView(
                   child: SelectableText(
                     coreTablesSQL,
-                    style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+                    style: const TextStyle(
+                        fontFamily: 'monospace', fontSize: 12),
                   ),
                 ),
               ),
             ),
             const SizedBox(height: 12),
+
+            // ── Action buttons ─────────────────────────────────
             Row(
               children: [
                 Expanded(
