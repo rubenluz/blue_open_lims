@@ -1,6 +1,8 @@
+import 'package:blue_open_lims/functions/printing_strains.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'strain_detail_page.dart';
@@ -446,7 +448,7 @@ class _StrainsPageState extends State<StrainsPage> {
       var q = Supabase.instance.client.from('strains').select('''
         *,
         samples (
-          sample_rebeca, sample_ccpi, sample_date,
+          sample_code, sample_rebeca, sample_ccpi, sample_date,
           sample_country, sample_archipelago, sample_island,
           sample_municipality, sample_local,
           sample_habitat_type, sample_habitat_1, sample_habitat_2, sample_habitat_3,
@@ -457,7 +459,7 @@ class _StrainsPageState extends State<StrainsPage> {
         )
       ''');
       if (widget.filterSampleId != null) {
-        q = q.eq('strain_sample_id', widget.filterSampleId);
+        q = q.eq('strain_sample_code', widget.filterSampleId);
       }
       final res = await q.order('strain_code', ascending: true);
 
@@ -886,18 +888,25 @@ class _StrainsPageState extends State<StrainsPage> {
       }
     }
     final dir = await getTemporaryDirectory();
-    final filePath =
-        '${dir.path}/strains_export_${DateTime.now().toIso8601String()}.xlsx';
+    final safeDate = DateFormat('yyyy-MM-dd_HH-mm-ss').format(DateTime.now());
+    final filePath = '${dir.path}\\strains_export_$safeDate.xlsx';
     final fileBytes = excel.encode();
+
     File(filePath)
       ..createSync(recursive: true)
       ..writeAsBytesSync(fileBytes!);
-    await OpenFilex.open(filePath);
-    _snack('Excel exported (${rows.length} rows)');
-  }
+        await OpenFilex.open(filePath);
+        _snack('Excel exported (${rows.length} rows)');
+    }
 
-  Future<void> _printStrains() async =>
-      _snack('Print — implement with the "printing" package');
+  Future<void> _printStrains() async {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const PrintStrainsPage(),
+      ),
+    );
+  }
 
   CellValue _toCellValue(dynamic value) {
     if (value == null) return TextCellValue('');
@@ -950,9 +959,7 @@ class _StrainsPageState extends State<StrainsPage> {
                                 isDense: true),
                             items: samples.map((s) {
                               final lbl = [
-                                s['sample_number']?.toString(),
-                                s['sample_rebeca'],
-                                s['sample_ccpi']
+                                s['sample_code']?.toString()
                               ]
                                   .where((v) => v != null && v.isNotEmpty)
                                   .join(' — ');
@@ -988,7 +995,7 @@ class _StrainsPageState extends State<StrainsPage> {
       final res = await Supabase.instance.client
           .from('strains')
           .insert({
-            'strain_sample_id': selId,
+            'strain_sample_code': selId,
             'strain_code': codeCtrl.text.isEmpty ? null : codeCtrl.text,
           })
           .select()
@@ -998,7 +1005,7 @@ class _StrainsPageState extends State<StrainsPage> {
             context,
             MaterialPageRoute(
                 builder: (_) => StrainDetailPage(
-                    strainId: res['strain_id'], onSaved: _load)))
+                    strainId: res['strain_code'], onSaved: _load)))
             .then((_) => _load());
       }
     } catch (e) {
@@ -1069,100 +1076,18 @@ class _StrainsPageState extends State<StrainsPage> {
             style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
       ]),
       actions: [
-        btn(
-            icon: Icons.refresh_rounded,
-            tooltip: 'Refresh',
-            label: 'Refresh',
-            onPressed: _load),
-        btn(
-            icon: Icons.print_outlined,
-            tooltip: 'Print',
-            label: 'Print',
-            onPressed: _printStrains),
-        btn(
-            icon: Icons.upload_file_rounded,
-            tooltip: 'Import from Excel',
-            label: 'Import',
-            onPressed: () async {
-              final ok = await Navigator.push<bool>(
-                  context,
-                  MaterialPageRoute(
-                      builder: (_) =>
-                          const ExcelImportPage(mode: 'strains')));
-              if (ok == true) _load();
-            }),
-        btn(
-            icon: Icons.checklist_rounded,
-            tooltip: 'Select rows & columns',
-            label: 'Select',
-            onPressed: _enterSelectionMode),
-        if (desktop) ...[
-          btn(
-              icon: _showColManager
-                  ? Icons.view_column
-                  : Icons.view_column_outlined,
-              tooltip: 'Manage columns',
-              label: 'Columns',
-              onPressed: () =>
-                  setState(() => _showColManager = !_showColManager)),
-          btn(
-              icon: Icons.width_normal_outlined,
-              tooltip: 'Reset widths',
-              label: 'Reset widths',
-              onPressed: () async {
-                await _resetColWidths();
-                _snack('Column widths reset');
-              }),
-          btn(
-              icon: Icons.reorder_rounded,
-              tooltip: 'Reset order',
-              label: 'Reset order',
-              onPressed: () async {
-                await _resetColOrder();
-                _snack('Column order reset');
-              }),
-        ] else
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert, color: Colors.white70),
-            tooltip: 'Column options',
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10)),
-            onSelected: (v) async {
-              if (v == 'cols') {
-                setState(() => _showColManager = !_showColManager);
-              }
-              if (v == 'widths') {
-                await _resetColWidths();
-                _snack('Column widths reset');
-              }
-              if (v == 'order') {
-                await _resetColOrder();
-                _snack('Column order reset');
-              }
-            },
-            itemBuilder: (_) => [
-              const PopupMenuItem(
-                  value: 'cols',
-                  child: ListTile(
-                      leading: Icon(Icons.view_column_outlined),
-                      title: Text('Manage columns'),
-                      dense: true)),
-              const PopupMenuItem(
-                  value: 'widths',
-                  child: ListTile(
-                      leading: Icon(Icons.width_normal_outlined),
-                      title: Text('Reset column widths'),
-                      dense: true)),
-              const PopupMenuItem(
-                  value: 'order',
-                  child: ListTile(
-                      leading: Icon(Icons.reorder_rounded),
-                      title: Text('Reset column order'),
-                      dense: true)),
-            ],
-          ),
-        const SizedBox(width: 4),
-      ],
+  btn(icon: Icons.refresh_rounded,    tooltip: 'Refresh', label: 'Refresh', onPressed: _load),  
+  btn(icon: Icons.checklist_rounded,  tooltip: 'Select rows & columns', label: 'Select', onPressed: _enterSelectionMode),
+
+  btn(icon: Icons.print_outlined,     tooltip: 'Print',   label: 'Print',   onPressed: _printStrains),
+
+  btn(icon: Icons.view_column_outlined, tooltip: 'Manage columns', label: 'Columns', onPressed: () => setState(() => _showColManager = !_showColManager)),
+    btn(icon: Icons.upload_file_rounded,tooltip: 'Import from Excel', label: 'Import', onPressed: () async {
+    final ok = await Navigator.push<bool>(context, MaterialPageRoute(builder: (_) => const ExcelImportPage(mode: 'strains')));
+    if (ok == true) _load();
+  }),
+  const SizedBox(width: 4),
+],
     );
   }
 
@@ -1633,90 +1558,199 @@ class _StrainsPageState extends State<StrainsPage> {
 
   // ── Column manager ────────────────────────────────────────────────────────
   Widget _buildColumnManager() {
-    return Container(
-      constraints: const BoxConstraints(maxHeight: 240),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
-        boxShadow: [
-          BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 4,
-              offset: const Offset(0, 2))
-        ],
-      ),
-      child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
-              child: Row(children: [
-                Text('Show / Hide Columns',
-                    style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 13,
-                        color: Theme.of(context).colorScheme.primary)),
-                const Spacer(),
-                TextButton(
-                    onPressed: () =>
-                        setState(() => _hiddenCols = {}),
-                    child: const Text('Show all')),
-              ]),
+  // Build a full ordered list of all columns with their current visibility and width
+  final orderedKeys = _colOrder ?? _allColumns.map((c) => c.key).toList();
+  // Ensure all columns are represented (in case new ones were added)
+  final allKeys = [
+    ...orderedKeys,
+    ..._allColumns.map((c) => c.key).where((k) => !orderedKeys.contains(k)),
+  ];
+
+  return Container(
+    constraints: const BoxConstraints(maxHeight: 420),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
+      boxShadow: [
+        BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 6, offset: const Offset(0, 3))
+      ],
+    ),
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Header bar
+        Container(
+          padding: const EdgeInsets.fromLTRB(14, 10, 10, 8),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF8FAFC),
+            border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
+          ),
+          child: Row(children: [
+            const Icon(Icons.view_column_outlined, size: 16, color: Color(0xFF3B82F6)),
+            const SizedBox(width: 8),
+            const Text('Column Manager',
+                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: Color(0xFF1E293B))),
+            const Spacer(),
+            // Reset all button
+            TextButton.icon(
+              icon: const Icon(Icons.restart_alt_rounded, size: 14),
+              label: const Text('Reset all', style: TextStyle(fontSize: 12)),
+              style: TextButton.styleFrom(foregroundColor: Colors.red.shade400,
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6)),
+              onPressed: () async {
+                await _resetColWidths();
+                await _resetColOrder();
+                setState(() => _hiddenCols = {});
+                _snack('All column settings reset');
+              },
             ),
-            Divider(height: 1, color: Colors.grey.shade100),
-            Flexible(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-                child: Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
-                  children: _allColumns.map((col) {
-                    final hidden = _hiddenCols.contains(col.key);
-                    final empty  = _emptyColKeys.contains(col.key);
-                    final blocked = col.onlyFor != null &&
-                        _kingdomMode != 'all' &&
-                        !col.onlyFor!.contains(_kingdomMode);
-                    return FilterChip(
-                      label: Text(col.label,
-                          style: const TextStyle(fontSize: 11)),
-                      selected: !hidden && !empty && !blocked,
-                      onSelected: (empty || blocked)
-                          ? null
-                          : (v) {
-                              setState(() {
-                                if (v) {
-                                  _hiddenCols.remove(col.key);
-                                } else {
-                                  _hiddenCols.add(col.key);
-                                }
-                              });
-                            },
-                      avatar: blocked
-                          ? const Icon(Icons.block,
-                              size: 11, color: Colors.red)
-                          : empty
-                              ? const Icon(
-                                  Icons.remove_circle_outline,
-                                  size: 11,
-                                  color: Colors.grey)
-                              : null,
-                      tooltip: blocked
-                          ? 'Not applicable for ${_kingdomMode}s'
-                          : empty
-                              ? 'No data'
-                              : null,
-                      visualDensity: VisualDensity.compact,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(6)),
-                    );
-                  }).toList(),
-                ),
-              ),
+            const SizedBox(width: 4),
+            IconButton(
+              icon: const Icon(Icons.close, size: 17),
+              onPressed: () => setState(() => _showColManager = false),
+              tooltip: 'Close',
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 30, minHeight: 30),
             ),
           ]),
-    );
-  }
+        ),
+        // Column header labels
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+          color: const Color(0xFFF1F5F9),
+          child: Row(children: [
+            const SizedBox(width: 36, child: Text('#', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Color(0xFF94A3B8)))),
+            const SizedBox(width: 8),
+            const Expanded(child: Text('Column', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Color(0xFF94A3B8)))),
+            const SizedBox(width: 80, child: Text('Width', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Color(0xFF94A3B8)))),
+            const SizedBox(width: 44, child: Center(child: Text('Show', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Color(0xFF94A3B8))))),
+          ]),
+        ),
+        // Scrollable column list
+        Flexible(
+          child: StatefulBuilder(
+            builder: (ctx, setPanel) {
+              // Rebuild ordered list from current state
+              final orderedKeys2 = _colOrder ?? _allColumns.map((c) => c.key).toList();
+              final displayKeys = [
+                ...orderedKeys2,
+                ..._allColumns.map((c) => c.key).where((k) => !orderedKeys2.contains(k)),
+              ];
+
+              return ListView.separated(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                itemCount: displayKeys.length,
+                separatorBuilder: (_, __) => Divider(height: 1, color: Colors.grey.shade100),
+                itemBuilder: (ctx, i) {
+                  final key = displayKeys[i];
+                  StrainColDef? colDef;
+                  try { colDef = _allColumns.firstWhere((c) => c.key == key); } catch (_) { return const SizedBox.shrink(); }
+
+                  final isHidden = _hiddenCols.contains(key) || _emptyColKeys.contains(key);
+                  final currentWidth = _colWidths[key] ?? colDef.defaultWidth;
+                  final position = i + 1; // 1-based
+
+                  return Container(
+                    color: isHidden ? const Color(0xFFFAFAFA) : Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                    child: Row(children: [
+                      // Position number input
+                      SizedBox(
+                        width: 36,
+                        child: _ColPositionField(
+                          position: position,
+                          total: displayKeys.length,
+                          onSubmit: (newPos) {
+                            final clamped = newPos.clamp(1, displayKeys.length);
+                            if (clamped == position) return;
+                            // Build new order
+                            final mutable = List<String>.from(displayKeys)..remove(key);
+                            mutable.insert(clamped - 1, key);
+                            setState(() => _colOrder = mutable);
+                            _saveColOrder();
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      // Column label
+                      Expanded(
+                        child: Row(children: [
+                          if (colDef.readOnly)
+                            Padding(
+                              padding: const EdgeInsets.only(right: 4),
+                              child: Icon(Icons.lock_outline_rounded, size: 10, color: Colors.grey.shade400),
+                            ),
+                          Flexible(
+                            child: Text(colDef.label,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: isHidden ? Colors.grey.shade400 : const Color(0xFF334155),
+                                fontWeight: FontWeight.w500,
+                              ),
+                              overflow: TextOverflow.ellipsis),
+                          ),
+                        ]),
+                      ),
+                      // Width slider
+                      SizedBox(
+                        width: 80,
+                        child: isHidden
+                          ? Center(child: Text('—', style: TextStyle(color: Colors.grey.shade300, fontSize: 12)))
+                          : SliderTheme(
+                              data: SliderThemeData(
+                                trackHeight: 2,
+                                thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+                                overlayShape: const RoundSliderOverlayShape(overlayRadius: 10),
+                                activeTrackColor: const Color(0xFF3B82F6),
+                                inactiveTrackColor: const Color(0xFFE2E8F0),
+                                thumbColor: const Color(0xFF3B82F6),
+                              ),
+                              child: Slider(
+                                value: currentWidth.clamp(40.0, 400.0),
+                                min: 40,
+                                max: 400,
+                                onChanged: (v) {
+                                  setState(() => _colWidths[key] = v);
+                                  setPanel(() {});
+                                },
+                                onChangeEnd: (v) => _saveColWidth(key, v),
+                              ),
+                            ),
+                      ),
+                      // Show/hide toggle
+                      SizedBox(
+                        width: 44,
+                        child: _emptyColKeys.contains(key)
+                          ? Center(child: Tooltip(
+                              message: 'No data in this column',
+                              child: Icon(Icons.remove_circle_outline, size: 14, color: Colors.grey.shade300)))
+                          : Transform.scale(
+                              scale: 0.8,
+                              child: Switch(
+                                value: !_hiddenCols.contains(key),
+                                onChanged: (v) {
+                                  setState(() {
+                                    if (v) _hiddenCols.remove(key);
+                                    else   _hiddenCols.add(key);
+                                  });
+                                  setPanel(() {});
+                                },
+                                activeColor: const Color(0xFF3B82F6),
+                              ),
+                            ),
+                      ),
+                    ]),
+                  );
+                },
+              );
+            },
+          ),
+        ),
+      ],
+    ),
+  );
+  
+}
 
   // ── Grid ──────────────────────────────────────────────────────────────────
   Widget _buildGrid() {
@@ -2557,4 +2591,94 @@ class _ThumbPainter extends CustomPainter {
   @override
   bool shouldRepaint(_ThumbPainter old) =>
       old.thumbX != thumbX || old.thumbW != thumbW;
+}
+// ─────────────────────────────────────────────────────────────────────────────
+// Column position number input
+// ─────────────────────────────────────────────────────────────────────────────
+class _ColPositionField extends StatefulWidget {
+  final int position;
+  final int total;
+  final void Function(int newPos) onSubmit;
+  const _ColPositionField({required this.position, required this.total, required this.onSubmit});
+
+  @override
+  State<_ColPositionField> createState() => _ColPositionFieldState();
+}
+
+class _ColPositionFieldState extends State<_ColPositionField> {
+  late TextEditingController _ctrl;
+  bool _editing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = TextEditingController(text: '${widget.position}');
+  }
+
+  @override
+  void didUpdateWidget(_ColPositionField old) {
+    super.didUpdateWidget(old);
+    if (!_editing && old.position != widget.position) {
+      _ctrl.text = '${widget.position}';
+    }
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final val = int.tryParse(_ctrl.text);
+    if (val != null) widget.onSubmit(val);
+    else _ctrl.text = '${widget.position}';
+    setState(() => _editing = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => setState(() => _editing = true),
+      child: _editing
+          ? SizedBox(
+              width: 32,
+              height: 26,
+              child: TextField(
+                controller: _ctrl,
+                autofocus: true,
+                textAlign: TextAlign.center,
+                keyboardType: TextInputType.number,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+                decoration: InputDecoration(
+                  isDense: true,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(4),
+                    borderSide: const BorderSide(color: Color(0xFF3B82F6), width: 1.5),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(4),
+                    borderSide: const BorderSide(color: Color(0xFF3B82F6), width: 1.5),
+                  ),
+                ),
+                onSubmitted: (_) => _submit(),
+                onTapOutside: (_) => _submit(),
+              ),
+            )
+          : Container(
+              width: 32,
+              height: 26,
+              decoration: BoxDecoration(
+                color: const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              alignment: Alignment.center,
+              child: Text('${widget.position}',
+                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF475569))),
+            ),
+    );
+  }
 }

@@ -49,7 +49,7 @@ class SampleColDef {
 
 const List<SampleColDef> _allColumns = [
   // Identifiers
-  SampleColDef('sample_code',       'Nº',                    width: 60,  readOnly: true),
+  SampleColDef('sample_code',         'Code',                    width: 60,  readOnly: true),
   SampleColDef('sample_rebeca',       'REBECA',                width: 120),
   SampleColDef('sample_ccpi',         'CCPI',                  width: 110),
   SampleColDef('sample_permit',       'Permit',                width: 120),
@@ -183,7 +183,7 @@ class _SamplesPageState extends State<SamplesPage> {
   }
 
   List<Map<String, dynamic>> get _selectedRows =>
-      _filtered.where((r) => _selectedRowIds.contains(r['sample_id'])).toList();
+      _filtered.where((r) => _selectedRowIds.contains(r['sample_code'])).toList();
 
   // ─────────────────────────────────────────────────────────────────────────
   @override
@@ -323,7 +323,7 @@ class _SamplesPageState extends State<SamplesPage> {
   }
 
   static const _numericCols = {
-    'sample_code', 'sample_latitude', 'sample_longitude', 'sample_altitude_m',
+    'sample_id', 'sample_latitude', 'sample_longitude', 'sample_altitude_m',
     'sample_temperature', 'sample_ph', 'sample_conductivity', 'sample_oxygen',
     'sample_salinity', 'sample_radiation', 'sample_turbidity', 'sample_depth_m',
     'sample_transport_time_h',
@@ -371,13 +371,13 @@ class _SamplesPageState extends State<SamplesPage> {
 
   // ── Edit ──────────────────────────────────────────────────────────────────
   Future<void> _commitEdit(Map<String, dynamic> row, String key, String value) async {
-    final id = row['sample_id'];
+    final id = row['sample_code'];
     try {
       await Supabase.instance.client
           .from('samples')
           .update({key: value.isEmpty ? null : value})
-          .eq('sample_id', id);
-      final idx = _rows.indexWhere((r) => r['sample_id'] == id);
+          .eq('sample_code', id);
+      final idx = _rows.indexWhere((r) => r['sample_code'] == id);
       if (idx != -1) _rows[idx][key] = value.isEmpty ? null : value;
       _applyFilter();
     } catch (e) {
@@ -416,7 +416,7 @@ class _SamplesPageState extends State<SamplesPage> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         title: const Text('Delete Sample?'),
         content: Text(
-            'Delete sample ${row['sample_rebeca'] ?? '#${row['sample_code']}'}? This cannot be undone.'),
+            'Delete sample ${row['sample_code'] ?? '#${row['sample_id']}'}? This cannot be undone.'),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context, false),
@@ -432,8 +432,8 @@ class _SamplesPageState extends State<SamplesPage> {
       await Supabase.instance.client
           .from('samples')
           .delete()
-          .eq('sample_id', row['sample_id']);
-      _rows.removeWhere((r) => r['sample_id'] == row['sample_id']);
+          .eq('sample_code', row['sample_code']);
+      _rows.removeWhere((r) => r['sample_code'] == row['sample_code']);
       _detectEmptyCols();
       _applyFilter();
     } catch (e) {
@@ -445,7 +445,7 @@ class _SamplesPageState extends State<SamplesPage> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => SampleDetailPage(sampleId: row['sample_id'], onSaved: _load),
+        builder: (_) => SampleDetailPage(sampleId: row['sample_code'], onSaved: _load),
       ),
     ).then((_) => _load());
   }
@@ -483,7 +483,7 @@ class _SamplesPageState extends State<SamplesPage> {
 
   void _selectAllRows() => setState(() {
         if (_selectedRowIds.length == _filtered.length) _selectedRowIds.clear();
-        else _selectedRowIds.addAll(_filtered.map((r) => r['sample_id']));
+        else _selectedRowIds.addAll(_filtered.map((r) => r['sample_id'])); // Assuming 'sample_code' is the unique identifier
       });
 
   void _selectAllCols() => setState(() {
@@ -987,12 +987,12 @@ class _SamplesPageState extends State<SamplesPage> {
 
   // ── Data row ──────────────────────────────────────────────────────────────
   Widget _buildDataRow(Map<String, dynamic> row, int index, List<SampleColDef> cols) {
-    final isSelected = _selectedRowIds.contains(row['sample_id']);
+    final isSelected = _selectedRowIds.contains(row['sample_code']);
     final Color rowBg   = isSelected ? _DS.selectedBg : index.isEven ? _DS.rowEven : _DS.rowOdd;
     final Color cellBase = isSelected ? _DS.selectedBg : index.isEven ? _DS.rowEven : _DS.rowOdd;
 
     return GestureDetector(
-      onTap: _selectionMode ? () => _toggleRowSelection(row['sample_id']) : null,
+      onTap: _selectionMode ? () => _toggleRowSelection(row['sample_code']) : null,
       child: Container(
         height: _DS.rowH,
         decoration: BoxDecoration(
@@ -1005,7 +1005,7 @@ class _SamplesPageState extends State<SamplesPage> {
               width: _DS.checkW, height: _DS.rowH, color: cellBase,
               child: Center(child: Checkbox(
                 value: isSelected,
-                onChanged: (_) => _toggleRowSelection(row['sample_id']),
+                onChanged: (_) => _toggleRowSelection(row['sample_code']),
                 visualDensity: VisualDensity.compact,
                 activeColor: const Color(0xFF1E40AF),
               )),
@@ -1030,14 +1030,14 @@ class _SamplesPageState extends State<SamplesPage> {
 
   // ── Data cell ─────────────────────────────────────────────────────────────
   Widget _buildDataCell(Map<String, dynamic> row, SampleColDef col, Color cellBase) {
-    final isEditing  = _editingCell?['rowId'] == row['sample_id'] && _editingCell?['key'] == col.key;
+    final isEditing  = _editingCell?['rowId'] == row['sample_code'] && _editingCell?['key'] == col.key;
     final isReadOnly = col.readOnly;
     final width      = _colWidth(col);
 
     return GestureDetector(
       onDoubleTap: (_selectionMode || isReadOnly) ? null : () {
         setState(() {
-          _editingCell = {'rowId': row['sample_id'], 'key': col.key};
+          _editingCell = {'rowId': row['sample_code'], 'key': col.key};
           _editController.text = row[col.key]?.toString() ?? '';
         });
       },

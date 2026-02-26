@@ -1,4 +1,4 @@
-name: BlueOpenLIMS
+name: blue_open_lims
 description: "A new Flutter project."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
@@ -41,6 +41,8 @@ dependencies:
   open_filex: ^4.7.0
   path_provider: ^2.1.5
   share_plus: ^12.0.1
+  intl: ^0.20.2
+  flutter_launcher_icons: "^0.14.4"
 
 dev_dependencies:
   flutter_test:

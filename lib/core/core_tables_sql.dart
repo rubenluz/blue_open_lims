@@ -559,7 +559,7 @@ CREATE TABLE IF NOT EXISTS audit_log (
 -- ═══════════════════════════════════════════════════════════════════════════════
 
 -- strains
-CREATE INDEX IF NOT EXISTS idx_strains_sample_id       ON strains(strain_sample_id);
+CREATE INDEX IF NOT EXISTS idx_strains_sample_code     ON strains(strain_sample_code);
 CREATE INDEX IF NOT EXISTS idx_strains_code            ON strains(strain_code);
 CREATE INDEX IF NOT EXISTS idx_strains_genus_species   ON strains(strain_genus, strain_species);
 CREATE INDEX IF NOT EXISTS idx_strains_status          ON strains(strain_status);
@@ -567,9 +567,7 @@ CREATE INDEX IF NOT EXISTS idx_strains_next_transfer   ON strains(strain_next_tr
 CREATE INDEX IF NOT EXISTS idx_strains_empire          ON strains(strain_empire);
 
 -- samples
-CREATE INDEX IF NOT EXISTS idx_samples_number          ON samples(sample_number);
-CREATE INDEX IF NOT EXISTS idx_samples_rebeca          ON samples(sample_rebeca);
-CREATE INDEX IF NOT EXISTS idx_samples_ccpi            ON samples(sample_ccpi);
+CREATE INDEX IF NOT EXISTS idx_samples_code            ON samples(sample_code);
 CREATE INDEX IF NOT EXISTS idx_samples_date            ON samples(sample_date);
 CREATE INDEX IF NOT EXISTS idx_samples_country         ON samples(sample_country);
 
@@ -622,15 +620,4 @@ CREATE INDEX IF NOT EXISTS idx_audit_user              ON audit_log(audit_user_i
 INSERT INTO app_meta (meta_initialized, meta_version)
 VALUES (true, '1.0')
 ON CONFLICT DO NOTHING;
-
-create or replace function get_public_tables()
-returns table(table_name text)
-language sql
-security definer
-as \$div\$  -- Escapado com \
-  select table_name::text
-  from information_schema.tables
-  where table_schema = 'public'
-    and table_type = 'BASE TABLE';
-\$div\$;
 ''';
