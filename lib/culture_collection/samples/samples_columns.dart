@@ -1,5 +1,6 @@
-/// Column definitions for the Samples table
-/// Keys match actual DB column names (sample_* prefix)
+// samples_columns.dart - Column definitions for the samples data grid:
+// field keys, header labels, widths.
+
 
 class SampleColDef {
   final String key;

@@ -1,3 +1,6 @@
+// qr_scanner_page.dart - QR/barcode scanner using the device camera via
+// mobile_scanner; returns the decoded string to the caller via Navigator.pop.
+
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '/theme/theme.dart';

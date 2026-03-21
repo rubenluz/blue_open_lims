@@ -1,3 +1,6 @@
+// lab_message.dart - LabMessage data model: message text, author email,
+// channel id, timestamp, reply_to reference, context tags; fromMap.
+
 class LabMessage {
   final int id;
   final String? userAuthUid;

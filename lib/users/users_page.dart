@@ -1,3 +1,7 @@
+// users_page.dart - User management grid: list all users, role assignment,
+// per-module permission columns, status (pending/active), invite workflow.
+// UserModel (public) re-exported here for use by user_detail_page.
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';

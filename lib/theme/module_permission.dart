@@ -1,3 +1,7 @@
+// module_permission.dart - ModulePermission InheritedWidget that propagates
+// the current page's read/write permission; context.canEditModule and
+// context.warnReadOnly() helpers.
+
 import 'package:flutter/material.dart';
 
 /// Carries the current module's permission down the widget tree so any page

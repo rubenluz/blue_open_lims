@@ -1,3 +1,6 @@
+// strains_toolbar.dart - Toolbar widget for StrainsPage: search field, filter
+// chips, view-mode toggles, export button, add-strain button.
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'strains_columns.dart';

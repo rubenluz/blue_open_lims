@@ -1,3 +1,6 @@
+// incare_widget.dart - Dashboard widget showing fish currently in-care:
+// stock counts by line with health-status indicators.
+
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';

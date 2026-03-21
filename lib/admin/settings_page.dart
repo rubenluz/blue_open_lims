@@ -1,3 +1,6 @@
+// settings_page.dart - Settings UI: theme toggle (light/dark/system), visible
+// module groups, per-user module permission overrides.
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';

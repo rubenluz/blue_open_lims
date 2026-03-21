@@ -1,3 +1,6 @@
+// strains_design_tokens.dart - StrainsDS: colour aliases for the strains
+// module (delegates to AppDS for the unified dark palette).
+
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'dart:io';

@@ -1,3 +1,9 @@
+// printing_page.dart - Label designer and printer driver integration.
+// Defines shared types: LabelField, LabelTemplate, _ConnState enum
+// (checking / connected / driverOnly / unreachable).
+// Sub-pages via part: printing_builder_page, printer_settings_page,
+// templates_dialog, printing_db_field_picker.
+
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';

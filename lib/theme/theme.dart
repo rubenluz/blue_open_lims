@@ -1,3 +1,6 @@
+// theme.dart - AppDS design tokens (fixed dark-chrome colors, text helpers)
+// and AppThemeContext extension (context.app* adaptive getters for content areas).
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 

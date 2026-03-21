@@ -1,3 +1,7 @@
+// core_tables_sql.dart - Complete PostgreSQL DDL for all core tables:
+// users, samples, strains, fish_lines, fish_stocks, locations, machines,
+// reagents, reservations, sops, messages, todo_items. Used by setup_page.
+
 const String coreTablesSQL = '''
 
 -- ═══════════════════════════════════════════════════════════════════════════════

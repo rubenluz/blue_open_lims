@@ -1,3 +1,6 @@
+// database_check_page.dart - Connection validation: runs a lightweight test
+// query before accepting the connection details as valid.
+
 import 'package:flutter/material.dart';
 import 'database_initializer.dart';
 

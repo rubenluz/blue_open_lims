@@ -1,3 +1,6 @@
+// login_page.dart - Login form: email/password fields, remember-me options
+// (session / 1 d / 7 d / 30 d), persist email for next visit, Supabase auth.
+
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide LocalStorage;
 import '../core/local_storage.dart';

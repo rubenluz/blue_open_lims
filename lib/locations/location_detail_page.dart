@@ -1,3 +1,7 @@
+// location_detail_page.dart - Location/room detail editor: name, parent room,
+// storage capacity, description, QR code generation.
+// Pushed via Navigator with its own Scaffold + AppBar.
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';

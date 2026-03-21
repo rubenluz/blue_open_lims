@@ -1,3 +1,6 @@
+// add_stock_dialog.dart - Dialog for adding a new fish stock to a tank:
+// line selector, rack/row/column position picker, male/female/juvenile counts.
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';

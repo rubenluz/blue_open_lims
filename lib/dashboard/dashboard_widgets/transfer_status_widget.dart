@@ -1,3 +1,6 @@
+// transfer_status_widget.dart - Dashboard widget displaying transfer task
+// status breakdown: pending, completed, overdue counts.
+
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';

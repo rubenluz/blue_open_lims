@@ -1,3 +1,7 @@
+// strains_page.dart - Strain grid with search, multi-column sort, status filters,
+// Excel import trigger, and navigation to StrainDetailPage.
+// Has its own Scaffold + AppBar (exception to the no-scaffold page rule).
+
 
 
 import 'package:flutter/material.dart';

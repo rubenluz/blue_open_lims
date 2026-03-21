@@ -1,3 +1,6 @@
+// location_model.dart - LocationModel: hierarchical parent-child relationship
+// for rooms and sub-locations; fromMap serialisation.
+
 import 'package:flutter/material.dart';
 
 class LocationModel {

@@ -1,3 +1,6 @@
+// reservation_model.dart - ReservationModel: booking start/end dates,
+// resource reference, user info; fromMap serialisation.
+
 import 'package:flutter/material.dart';
 
 class ReservationModel {

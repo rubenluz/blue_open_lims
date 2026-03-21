@@ -1,3 +1,6 @@
+// sop_pdf_viewer_page.dart - In-app PDF viewer for SOP documents using the
+// native PDF rendering plugin; page navigation controls.
+
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';

@@ -1,3 +1,6 @@
+// stocks_connection_model.dart - FishStock model with tank position mapping
+// (rack/row/column); fromMap serialisation for the fish_stocks table.
+
 import '/core/fish_db_schema.dart';
 
 // ─── FISH STOCK MODEL ─────────────────────────────────────────────────────────

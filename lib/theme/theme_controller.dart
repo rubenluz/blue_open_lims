@@ -1,3 +1,6 @@
+// theme_controller.dart - ThemeMode persistence via SharedPreferences;
+// light / dark / system selection surfaced to MaterialApp.
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

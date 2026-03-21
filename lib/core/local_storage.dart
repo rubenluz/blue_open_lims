@@ -1,3 +1,6 @@
+// local_storage.dart - SharedPreferences helpers: saved connections list,
+// session expiry, remember-me duration, last-used email.
+
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../database_connection/database_connection_model.dart';

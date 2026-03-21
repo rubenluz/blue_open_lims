@@ -1,11 +1,6 @@
-/// Single source of truth for fish facility DB table names and column names.
-///
-/// Usage: reference these constants in models (fromMap/toMap) and in page
-/// queries, so that renaming a column in core_tables_sql.dart only requires
-/// updating the matching constant here — all models and queries update
-/// automatically via the Dart constant reference.
-///
-/// Always keep in sync with core_tables_sql.dart.
+// fish_db_schema.dart - FishSch: compile-time constants for fish_lines and
+// fish_stocks table/column names (single source of truth for query strings).
+
 abstract class FishSch {
   // ── Table names ────────────────────────────────────────────────────────────
   static const linesTable  = 'fish_lines';

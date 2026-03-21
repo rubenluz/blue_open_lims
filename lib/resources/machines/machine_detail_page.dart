@@ -1,3 +1,7 @@
+// machine_detail_page.dart - Machine editor: name, type, specifications,
+// operational status, location, maintenance notes, QR code display.
+// Pushed via Navigator with its own Scaffold + AppBar.
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:qr_flutter/qr_flutter.dart';

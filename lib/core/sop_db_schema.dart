@@ -1,4 +1,6 @@
-// Schema constants for the facility_sops table and its Supabase Storage bucket.
+// sop_db_schema.dart - SopSch: compile-time constants for sop table column
+// names used across sops_page and sop_model.
+
 class SopSch {
   // Table name
   static const table    = 'facility_sops';

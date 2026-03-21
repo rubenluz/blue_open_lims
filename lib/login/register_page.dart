@@ -1,3 +1,6 @@
+// register_page.dart - User registration form: email, password, display name;
+// creates Supabase auth user and inserts a pending users-table row.
+
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide LocalStorage;
 

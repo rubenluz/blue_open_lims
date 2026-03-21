@@ -1,3 +1,6 @@
+// add_connection_page.dart - Form to add a new Supabase connection:
+// project URL, anon key, display name; validates and persists via local_storage.
+
 import 'package:flutter/material.dart';
 import '../core/local_storage.dart';
 import '../supabase/supabase_manager.dart';

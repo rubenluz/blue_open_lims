@@ -1,3 +1,6 @@
+// tank_cleaning_page.dart - Tank cleaning log and schedule: lists pending and
+// completed cleaning tasks, mark-done workflow.
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';

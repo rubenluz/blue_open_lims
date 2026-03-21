@@ -1,4 +1,7 @@
-// Dashboard page with customizable widgets and layout.
+// dashboard_page.dart - Customizable dashboard with 10 widget slot types
+// (next transfers, strains by origin/medium, tank cleaning, fish by line,
+// to-do, timelines, transfer status, in-care). Layout persisted in SharedPrefs.
+
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart' show kIsWeb;

@@ -1,3 +1,6 @@
+// transfer_timeline_widget.dart - Timeline visualization of strain transfer
+// events over the past and upcoming weeks; date-grouped rows.
+
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';

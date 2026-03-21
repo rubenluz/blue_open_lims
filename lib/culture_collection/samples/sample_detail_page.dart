@@ -1,3 +1,7 @@
+// sample_detail_page.dart - Sample editor: location, collection method, GPS,
+// water parameters, habitat, observations, links to strains and projects.
+// Pushed via Navigator with its own Scaffold + AppBar.
+
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../strains/strains_page.dart';

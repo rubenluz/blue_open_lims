@@ -1,3 +1,6 @@
+// main.dart - App entry point: startup splash, DNS connectivity check,
+// auth/session restore, route to login or menu. ErrorWidget override.
+
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';

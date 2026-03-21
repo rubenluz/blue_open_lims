@@ -1,3 +1,6 @@
+// samples_design_tokens.dart - SamplesDS: colour aliases for the samples
+// module (delegates to AppDS for the unified dark palette).
+
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'dart:io';

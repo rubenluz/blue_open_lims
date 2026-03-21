@@ -1,3 +1,6 @@
+// stocks_page.dart - Fish stock inventory with rack visualisation, status
+// filters, links to lines, add/edit/transfer workflows.
+
 ﻿
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';

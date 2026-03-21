@@ -1,3 +1,6 @@
+// doc_viewer_page.dart - Document viewer router: detects file type (PDF/DOCX)
+// and either opens SopPdfViewerPage or launches the file in an external app.
+
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';

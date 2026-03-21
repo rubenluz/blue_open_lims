@@ -1,3 +1,6 @@
+// app_settings.dart - AppSettings: global settings model (visible module groups,
+// feature flags) persisted via SharedPreferences.
+
 import 'package:supabase_flutter/supabase_flutter.dart' hide LocalStorage;
 
 /// Global app settings stored in Supabase `app_meta.meta_settings`.

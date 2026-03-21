@@ -1,3 +1,6 @@
+// menu_page.dart - Root shell: sidebar navigation with role-based module
+// visibility, per-user permission checks, connectivity poll (10 s), page routing.
+
 import 'dart:async';
 import 'dart:io';
 import 'package:blue_open_lims/lab_chat/lab_chat_page.dart';

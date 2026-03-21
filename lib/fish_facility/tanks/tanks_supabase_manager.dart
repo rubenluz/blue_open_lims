@@ -1,3 +1,6 @@
+// tanks_supabase_manager.dart - Tank-specific Supabase query helpers
+// (upsert, delete) extracted for reuse across tanks_page and dialogs.
+
 import '../../supabase/supabase_manager.dart';
 import '/core/fish_db_schema.dart';
 import 'tanks_connection_model.dart';

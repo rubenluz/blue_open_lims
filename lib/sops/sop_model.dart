@@ -1,3 +1,6 @@
+// sop_model.dart - FacilitySop model: title, document type, status, version,
+// file path, upload date, author, tags; fromMap serialisation.
+
 import '/core/sop_db_schema.dart';
 
 class FacilitySop {

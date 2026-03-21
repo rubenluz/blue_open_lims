@@ -1,3 +1,6 @@
+// tanks_connection_model.dart - ZebrafishTank data model: maps to the
+// fish_stocks Supabase table; from/toMap serialisation, copyWith helper.
+
 import '/core/fish_db_schema.dart';
 
 // ─── ZEBRAFISH TANK MODEL ─────────────────────────────────────────────────────

@@ -1,4 +1,6 @@
-//This page is shown when the app detects no users in the database. It allows creating the first admin account, which will have full permissions to manage users and data. After creating the admin, it navigates to the main menu.
+// set_admin_login_page.dart - First-run admin setup: creates the first
+// superadmin account when no users exist in the users table.
+
 
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';

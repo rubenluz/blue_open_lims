@@ -1,3 +1,7 @@
+// user_detail_page.dart - User editor: email, display name, role selector,
+// per-module permission dropdowns, last-login display, role-upgrade workflow.
+// Pushed via Navigator with its own Scaffold + AppBar.
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';

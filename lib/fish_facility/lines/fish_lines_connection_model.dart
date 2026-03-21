@@ -1,3 +1,6 @@
+// fish_lines_connection_model.dart - FishLine data model: maps to the
+// fish_lines Supabase table; genetics/transgene fields, fromMap serialisation.
+
 import '/core/fish_db_schema.dart';
 
 // ─── FISH LINE MODEL ──────────────────────────────────────────────────────────

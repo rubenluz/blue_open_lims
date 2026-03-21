@@ -1,5 +1,6 @@
-/// Column definitions for the Strains table
-/// Keys match actual DB column names (strain_* and s_* for sample mirrors)
+// strains_columns.dart - Column definitions for the strains grid: field key,
+// header label, width, sortability, editability.
+
 
 class StrainColDef {
   final String key;

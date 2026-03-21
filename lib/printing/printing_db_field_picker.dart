@@ -1,3 +1,7 @@
+// printing_db_field_picker.dart - Part of printing_page.dart.
+// Dropdown picker for selecting a Supabase table field to bind to a label
+// field slot (used inside the template builder).
+
 part of 'printing_page.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────

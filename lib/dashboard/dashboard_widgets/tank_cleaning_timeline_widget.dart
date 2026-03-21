@@ -1,3 +1,6 @@
+// tank_cleaning_timeline_widget.dart - Timeline of tank cleaning events;
+// completion status colour coding; historical and upcoming view.
+
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';

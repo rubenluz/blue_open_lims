@@ -1,3 +1,7 @@
+// stocks_detail_page.dart - Fish stock detail editor: fish counts, genetics
+// fields (genotype, zygosity, generation, mutation info), linked line and tank.
+// Pushed via Navigator with its own Scaffold + AppBar.
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';

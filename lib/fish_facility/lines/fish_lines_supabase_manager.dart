@@ -1,3 +1,6 @@
+// fish_lines_supabase_manager.dart - Fish-line-specific Supabase query
+// helpers (fetch active lines, upsert) extracted for reuse.
+
 import '../../supabase/supabase_manager.dart';
 import '/core/fish_db_schema.dart';
 import 'fish_lines_connection_model.dart';

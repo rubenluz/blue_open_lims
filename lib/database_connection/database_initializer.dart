@@ -1,3 +1,6 @@
+// database_initializer.dart - DatabaseInitializer: checks whether the schema
+// has been applied and triggers the setup flow if required.
+
 import '../supabase/supabase_manager.dart';
 
 class DatabaseInitializer {

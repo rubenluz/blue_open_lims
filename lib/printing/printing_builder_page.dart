@@ -1,3 +1,7 @@
+// printing_builder_page.dart - Part of printing_page.dart.
+// Label template builder UI: drag-to-place fields, paper size selector,
+// live preview, ZPL/Brother QL rendering.
+
 part of 'printing_page.dart';
 
 

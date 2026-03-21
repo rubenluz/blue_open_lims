@@ -1,3 +1,6 @@
+// to_do_widget.dart - Dashboard to-do list: create, edit, toggle, delete tasks
+// stored in the todo_items Supabase table; due-date picker.
+
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';

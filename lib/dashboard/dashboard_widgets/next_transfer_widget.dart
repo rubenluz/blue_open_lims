@@ -1,3 +1,6 @@
+// next_transfer_widget.dart - Dashboard widget showing the next upcoming
+// strain transfer tasks with due dates and tank info.
+
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';

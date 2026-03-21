@@ -1,3 +1,6 @@
+// fish_by_line_widget.dart - Dashboard widget aggregating total fish counts
+// (males + females + juveniles) grouped by genetic line.
+
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';

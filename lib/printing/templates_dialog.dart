@@ -1,3 +1,6 @@
+// templates_dialog.dart - Part of printing_page.dart.
+// Dialog for listing, selecting, renaming, and deleting saved label templates.
+
 part of 'printing_page.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -1,3 +1,6 @@
+// setup_page.dart - Database initialisation wizard: runs DDL from
+// core_tables_sql.dart to create all tables on a fresh Supabase project.
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../supabase/core_tables_sql.dart';

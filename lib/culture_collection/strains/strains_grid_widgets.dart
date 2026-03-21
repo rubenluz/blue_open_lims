@@ -1,3 +1,6 @@
+// strains_grid_widgets.dart - Grid cell widgets for the strains data table:
+// scrollable value cells, inline edit cells, status badge cells, colour coding.
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';

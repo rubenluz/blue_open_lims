@@ -1,4 +1,6 @@
-// lib/models/connection_model.dart
+// database_connection_model.dart - ConnectionModel: stores a Supabase project
+// URL, anon key, and display name; JSON serialisation for SharedPreferences.
+
 
 class ConnectionModel {
   String name;

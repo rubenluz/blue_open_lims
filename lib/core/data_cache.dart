@@ -1,3 +1,7 @@
+// data_cache.dart - DataCache: in-memory singleton that holds the most-recently
+// loaded lists of samples, strains, locations, machines, and reagents to avoid
+// redundant Supabase fetches within the same session.
+
 import 'dart:convert';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';

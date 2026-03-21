@@ -1,3 +1,6 @@
+// strains_by_medium_widget.dart - Dashboard chart aggregating active strain
+// counts by growth medium type.
+
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';

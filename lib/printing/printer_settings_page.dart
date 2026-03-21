@@ -1,3 +1,7 @@
+// printer_settings_page.dart - Part of printing_page.dart.
+// Printer configuration: paper size, driver selection (ZPL / Brother QL),
+// network hostname/port, reachability test.
+
 part of 'printing_page.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────

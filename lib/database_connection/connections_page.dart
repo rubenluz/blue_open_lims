@@ -1,3 +1,6 @@
+// connections_page.dart - Saved Supabase connection list: select active
+// connection, edit URL/key, delete, navigate to add-connection page.
+
 import 'package:flutter/material.dart';
 import '../core/local_storage.dart';
 import 'database_connection_model.dart';

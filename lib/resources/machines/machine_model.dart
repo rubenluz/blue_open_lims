@@ -1,3 +1,6 @@
+// machine_model.dart - MachineModel: maps to the machines Supabase table;
+// status, specs, location fields; fromMap / toMap serialisation.
+
 import 'package:flutter/material.dart';
 
 class MachineModel {

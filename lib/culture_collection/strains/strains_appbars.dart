@@ -1,3 +1,6 @@
+// strains_appbars.dart - AppBar widget variants for StrainsPage (normal view,
+// selection mode, search mode).
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '/theme/theme.dart';

@@ -1,3 +1,7 @@
+// shared_widgets.dart - Fish-facility shared tokens and widgets:
+// FishDS (colour aliases to AppDS), StatusBadge, InlineEditCell
+// (permission-aware double-tap-to-edit cell used in tanks and stocks grids).
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '/theme/theme.dart';

@@ -1,3 +1,6 @@
+// supabase_manager.dart - Singleton Supabase client initialisation, project-ref
+// extraction from the stored URL, and session restore on startup.
+
 import 'package:supabase_flutter/supabase_flutter.dart' hide LocalStorage;
 import '../database_connection/database_connection_model.dart';
 import '../core/local_storage.dart';

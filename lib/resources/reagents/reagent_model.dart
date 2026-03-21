@@ -1,3 +1,6 @@
+// reagent_model.dart - ReagentModel: maps to the reagents Supabase table;
+// expiry tracking, quantity, minimum-quantity threshold, fromMap serialisation.
+
 class ReagentModel {
   final int id;
   final String name;
