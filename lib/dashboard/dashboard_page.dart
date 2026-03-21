@@ -1,8 +1,9 @@
-//TODO: add a custom button on the app bar in the right side  that display update in green is app is updated or Download Update if not. THe app must check if in the github page and folder desktop_release the file BlueOpenLIMS_installer has a newwer version BlueOpenLIMS_installer_v0.1.2, checking if after the _v the version is higher then the current isntalled version. This should work only in the desktop version. App 
 // Dashboard page with customizable widgets and layout.
+import 'dart:convert';
+import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert';
 import 'dashboard_widgets/next_transfer_widget.dart';
 import 'dashboard_widgets/strains_by_origin_widget.dart';
 import 'dashboard_widgets/strains_by_medium_widget.dart';
@@ -44,9 +45,17 @@ class DashboardPage extends StatefulWidget {
   State<DashboardPage> createState() => _DashboardPageState();
 }
 
+enum _UpdateStatus { checking, upToDate, updateAvailable, error }
+
 class _DashboardPageState extends State<DashboardPage> {
   // Desktop: 8-slot grid (4 cols × 2 rows), index = row*4 + col
   Map<int, String?> _desktopSlots = {};
+
+  // ── Update check (desktop only) ───────────────────────────────────────────
+  static const _currentVersion = '0.1.3';
+  _UpdateStatus _updateStatus = _UpdateStatus.checking;
+  String? _latestVersion;
+  String? _downloadUrl;
 
   // Span per top-row slot (index 0-3): 1 = normal, 2 = double-height
   Map<int, int> _desktopSpans = {};
@@ -58,6 +67,87 @@ class _DashboardPageState extends State<DashboardPage> {
   void initState() {
     super.initState();
     _initializeDashboard();
+    _checkForUpdate();
+  }
+
+  // ── Update check ───────────────────────────────────────────────────────────
+
+  static bool get _isDesktop =>
+      !kIsWeb && (Platform.isWindows || Platform.isMacOS || Platform.isLinux);
+
+  int _cmpVer(String a, String b) {
+    final av = a.split('.').map(int.tryParse).toList();
+    final bv = b.split('.').map(int.tryParse).toList();
+    for (int i = 0; i < 3; i++) {
+      final ai = (i < av.length ? av[i] : null) ?? 0;
+      final bi = (i < bv.length ? bv[i] : null) ?? 0;
+      if (ai != bi) return ai.compareTo(bi);
+    }
+    return 0;
+  }
+
+  Future<void> _checkForUpdate() async {
+    if (!_isDesktop) {
+      setState(() => _updateStatus = _UpdateStatus.upToDate);
+      return;
+    }
+    const api = 'https://api.github.com/repos/rubenluz/blue_open_lims/contents/desktop_release';
+    try {
+      final client = HttpClient();
+      final req = await client.getUrl(Uri.parse(api));
+      req.headers.set('User-Agent', 'BlueOpenLIMS');
+      final res = await req.close().timeout(const Duration(seconds: 10));
+      final body = await res.transform(const Utf8Decoder()).join();
+      client.close();
+
+      if (res.statusCode != 200) {
+        if (mounted) setState(() => _updateStatus = _UpdateStatus.error);
+        return;
+      }
+
+      final files = jsonDecode(body) as List<dynamic>;
+      String? latestVer;
+      String? latestUrl;
+
+      for (final file in files) {
+        final name = (file as Map<String, dynamic>)['name'] as String? ?? '';
+        final m = RegExp(r'BlueOpenLIMS_installer_v(\d+\.\d+\.\d+)').firstMatch(name);
+        if (m != null) {
+          final ver = m.group(1)!;
+          if (latestVer == null || _cmpVer(ver, latestVer) > 0) {
+            latestVer = ver;
+            latestUrl = file['download_url'] as String?;
+          }
+        }
+      }
+
+      if (!mounted) return;
+      if (latestVer == null) {
+        setState(() => _updateStatus = _UpdateStatus.error);
+      } else if (_cmpVer(latestVer, _currentVersion) > 0) {
+        setState(() {
+          _updateStatus = _UpdateStatus.updateAvailable;
+          _latestVersion = latestVer;
+          _downloadUrl = latestUrl;
+        });
+      } else {
+        setState(() => _updateStatus = _UpdateStatus.upToDate);
+      }
+    } catch (_) {
+      if (mounted) setState(() => _updateStatus = _UpdateStatus.error);
+    }
+  }
+
+  void _openDownload() {
+    final url = _downloadUrl;
+    if (url == null) return;
+    if (Platform.isWindows) {
+      Process.run('cmd', ['/c', 'start', '', url], runInShell: true);
+    } else if (Platform.isMacOS) {
+      Process.run('open', [url]);
+    } else {
+      Process.run('xdg-open', [url]);
+    }
   }
 
   // ── Init & persistence ─────────────────────────────────────────────────────
@@ -551,12 +641,71 @@ class _DashboardPageState extends State<DashboardPage> {
 
   // ── Header ─────────────────────────────────────────────────────────────────
 
+  Widget _buildUpdateButton() {
+    switch (_updateStatus) {
+      case _UpdateStatus.checking:
+        return const SizedBox(
+          width: 16, height: 16,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        );
+      case _UpdateStatus.upToDate:
+        return Row(mainAxisSize: MainAxisSize.min, children: [
+          const Icon(Icons.check_circle, size: 15, color: Color(0xFF22C55E)),
+          const SizedBox(width: 5),
+          Text('Application up to date',
+              style: TextStyle(fontSize: 12, color: Colors.green.shade600,
+                  fontWeight: FontWeight.w600)),
+        ]);
+      case _UpdateStatus.updateAvailable:
+        return TextButton.icon(
+          style: TextButton.styleFrom(
+            foregroundColor: Colors.white,
+            backgroundColor: const Color(0xFF38BDF8),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            minimumSize: Size.zero,
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          ),
+          onPressed: _openDownload,
+          icon: const Icon(Icons.download_rounded, size: 15),
+          label: Text('Download v${_latestVersion ?? ''}',
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+        );
+      case _UpdateStatus.error:
+        return Tooltip(
+          message: 'Could not check for updates',
+          child: InkWell(
+            borderRadius: BorderRadius.circular(6),
+            onTap: () {
+              setState(() => _updateStatus = _UpdateStatus.checking);
+              _checkForUpdate();
+            },
+            child: Padding(
+              padding: const EdgeInsets.all(4),
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                Icon(Icons.refresh, size: 14, color: Colors.grey.shade400),
+                const SizedBox(width: 4),
+                Text('Retry',
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade400)),
+              ]),
+            ),
+          ),
+        );
+    }
+  }
+
   Widget _buildHeader() {
     final name = widget.userInfo['user_name'] as String? ??
         widget.userInfo['user_username'] as String? ?? '';
-    return Text(
-      'Welcome back${name.isNotEmpty ? ", $name" : ''}!',
-      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+    return Row(
+      children: [
+        Text(
+          'Welcome back${name.isNotEmpty ? ", $name" : ''}!',
+          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+        ),
+        const Spacer(),
+        if (_isDesktop) _buildUpdateButton(),
+      ],
     );
   }
 
