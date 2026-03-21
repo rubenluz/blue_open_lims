@@ -1,4 +1,6 @@
-﻿import 'dart:io';
+﻿// On the tank, before the food say the frequency like '2x - GEMMA 300'
+
+import 'dart:io';
 import '/core/data_cache.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';

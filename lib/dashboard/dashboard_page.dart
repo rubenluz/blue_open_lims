@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dashboard_widgets/next_transfer_widget.dart';
 import 'dashboard_widgets/strains_by_origin_widget.dart';
@@ -52,8 +53,8 @@ class _DashboardPageState extends State<DashboardPage> {
   Map<int, String?> _desktopSlots = {};
 
   // ── Update check (desktop only) ───────────────────────────────────────────
-  static const _currentVersion = '0.1.3';
   _UpdateStatus _updateStatus = _UpdateStatus.checking;
+  String? _currentVersion;
   String? _latestVersion;
   String? _downloadUrl;
 
@@ -87,6 +88,10 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Future<void> _checkForUpdate() async {
+    final info = await PackageInfo.fromPlatform();
+    final currentVer = info.version;
+    if (mounted) setState(() => _currentVersion = currentVer);
+
     if (!_isDesktop) {
       setState(() => _updateStatus = _UpdateStatus.upToDate);
       return;
@@ -124,7 +129,7 @@ class _DashboardPageState extends State<DashboardPage> {
       if (!mounted) return;
       if (latestVer == null) {
         setState(() => _updateStatus = _UpdateStatus.error);
-      } else if (_cmpVer(latestVer, _currentVersion) > 0) {
+      } else if (_cmpVer(latestVer, currentVer) > 0) {
         setState(() {
           _updateStatus = _UpdateStatus.updateAvailable;
           _latestVersion = latestVer;
@@ -652,24 +657,34 @@ class _DashboardPageState extends State<DashboardPage> {
         return Row(mainAxisSize: MainAxisSize.min, children: [
           const Icon(Icons.check_circle, size: 15, color: Color(0xFF22C55E)),
           const SizedBox(width: 5),
-          Text('Application up to date',
+          Text('Application up to date${_currentVersion != null ? ' (v$_currentVersion)' : ''}',
               style: TextStyle(fontSize: 12, color: Colors.green.shade600,
                   fontWeight: FontWeight.w600)),
         ]);
       case _UpdateStatus.updateAvailable:
-        return TextButton.icon(
-          style: TextButton.styleFrom(
-            foregroundColor: Colors.white,
-            backgroundColor: const Color(0xFF38BDF8),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            minimumSize: Size.zero,
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          ),
-          onPressed: _openDownload,
-          icon: const Icon(Icons.download_rounded, size: 15),
-          label: Text('Download v${_latestVersion ?? ''}',
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (_currentVersion != null)
+              Text('Current: v$_currentVersion',
+                  style: TextStyle(fontSize: 11, color: Colors.grey.shade500)),
+            const SizedBox(height: 4),
+            TextButton.icon(
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.white,
+                backgroundColor: const Color(0xFF38BDF8),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              onPressed: _openDownload,
+              icon: const Icon(Icons.download_rounded, size: 15),
+              label: Text('Download v${_latestVersion ?? ''}',
+                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+            ),
+          ],
         );
       case _UpdateStatus.error:
         return Tooltip(
