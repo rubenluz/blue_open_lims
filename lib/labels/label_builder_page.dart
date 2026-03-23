@@ -236,12 +236,14 @@ class _BuilderTabState extends State<_BuilderTab> {
       ..ipAddress = prefs.getString('printer_ipAddress') ?? ''
       ..usbPath = prefs.getString('printer_usbPath') ?? '';
     if (!mounted) return;
-    showDialog(
-      context: context,
-      builder: (ctx) => _PrintDialog(
-        template: _tpl.clone(),
-        printer: printer,
-        entityType: _tpl.category,
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => _PrintLabelPage(
+          template: _tpl.clone(),
+          printer: printer,
+          entityType: _tpl.category,
+        ),
       ),
     );
   }

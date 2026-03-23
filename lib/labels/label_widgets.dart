@@ -119,13 +119,15 @@ class _TemplatesTab extends StatelessWidget {
   }
 
   void _showPrintDialog(BuildContext context, LabelTemplate t) {
-    showDialog(
-      context: context,
-      builder: (ctx) => _PrintDialog(
-        template: t,
-        printer: printer,
-        initialRecords: records,
-        entityType: t.category,
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => _PrintLabelPage(
+          template: t,
+          printer: printer,
+          initialRecords: records,
+          entityType: t.category,
+        ),
       ),
     );
   }
