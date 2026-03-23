@@ -193,11 +193,15 @@ class _ReservationFormDialog extends StatefulWidget {
   final ReservationModel? existing;
   final List<Map<String, dynamic>> equipment;
   final List<ReservationModel> allReservations;
+  final int? prefillResourceId;
+  final String? prefillResourceName;
 
   const _ReservationFormDialog({
     this.existing,
     required this.equipment,
     required this.allReservations,
+    this.prefillResourceId,
+    this.prefillResourceName,
   });
 
   @override
@@ -228,8 +232,8 @@ class _ReservationFormDialogState extends State<_ReservationFormDialog> {
     _projectCtrl = TextEditingController(text: e?.project ?? '');
     _notesCtrl = TextEditingController(text: e?.notes ?? '');
     _resourceType = e?.resourceType ?? 'equipment';
-    _resourceId = e?.resourceId;
-    _resourceName = e?.resourceName;
+    _resourceId   = e?.resourceId   ?? widget.prefillResourceId;
+    _resourceName = e?.resourceName ?? widget.prefillResourceName;
     _status = e?.status ?? 'confirmed';
     if (e != null) {
       _start = e.start;
@@ -582,4 +586,39 @@ class _ReservationFormDialogState extends State<_ReservationFormDialog> {
               ]),
         ),
       );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Quick reservation entry point — callable from machine detail page
+// ─────────────────────────────────────────────────────────────────────────────
+
+Future<void> showMachineQuickReservationDialog(
+  BuildContext context, {
+  required int machineId,
+  required String machineName,
+}) async {
+  List<Map<String, dynamic>> equipment = [];
+  List<ReservationModel> allReservations = [];
+  try {
+    final eq = await Supabase.instance.client
+        .from('equipment').select('equipment_id, equipment_name');
+    equipment = List<Map<String, dynamic>>.from(eq);
+  } catch (_) {}
+  if (!context.mounted) return;
+  try {
+    final res = await Supabase.instance.client.from('reservations').select();
+    allReservations = res
+        .map((r) => ReservationModel.fromMap(Map<String, dynamic>.from(r)))
+        .toList();
+  } catch (_) {}
+  if (!context.mounted) return;
+  await showDialog<bool>(
+    context: context,
+    builder: (_) => _ReservationFormDialog(
+      equipment: equipment,
+      allReservations: allReservations,
+      prefillResourceId: machineId,
+      prefillResourceName: machineName,
+    ),
+  );
 }

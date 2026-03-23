@@ -139,7 +139,8 @@ class _LocationsPageState extends State<LocationsPage> {
 
   void _navigate(LocationModel loc) => Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => LocationDetailPage(locationId: loc.id)));
+      MaterialPageRoute(builder: (_) => LocationDetailPage(locationId: loc.id)))
+      .then((_) => _load());
 
   Future<void> _showDialog({
     LocationModel? existing,
@@ -204,7 +205,7 @@ class _LocationsPageState extends State<LocationsPage> {
 
   void _showQr(LocationModel loc) {
     final ref = SupabaseManager.projectRef ?? 'local';
-    final data = 'bluelims://$ref/location/${loc.id}';
+    final data = 'bluelims://$ref/locations/${loc.id}';
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(

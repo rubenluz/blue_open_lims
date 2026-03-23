@@ -4,7 +4,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:blue_open_lims/lab_chat/lab_chat_page.dart';
-import 'package:blue_open_lims/printing/printing_page.dart';
+import 'package:blue_open_lims/labels/label_page.dart';
 import '../locations/locations_page.dart';
 import '../resources/reagents/reagents_page.dart';
 import '../resources/machines/machines_page.dart';
@@ -25,6 +25,8 @@ import '../users/users_page.dart';
 import '../users/user_detail_page.dart';
 import '../admin/app_settings.dart';
 import '../qr_scanner/qr_scanner_page.dart';
+import '../audit_log/audit_log.dart';
+import '../requests/requests_page.dart';
 
 const _roleOrder = ['viewer', 'technician', 'researcher', 'admin', 'superadmin'];
 
@@ -44,7 +46,6 @@ const Map<String, String> _modulePermColumn = {
   'chat':             'user_table_chat',
   'strains':          'user_table_culture_collection',
   'samples':          'user_table_culture_collection',
-  'requests':         'user_table_culture_collection',
   'sops_inventory':   'user_table_culture_collection',
   'fish_stock':       'user_table_fish_facility',
   'fish_tankmap':     'user_table_fish_facility',
@@ -60,9 +61,9 @@ const Map<String, String?> _moduleRequiredRole = {
   'dashboard':        'technician',
   'labels':           'technician',
   'chat':             'technician',
+  'requests':         null,
   'strains':          null,
   'samples':          'technician',
-  'requests':         'technician',
   'sops_inventory':   'technician',
   'fish_stock':       null,
   'fish_tankmap':     'technician',
@@ -82,7 +83,6 @@ class _NavItem {
   final String label;
   final IconData icon;
   final Color accent;
-  final bool comingSoon;
   final Widget Function(_MenuPageState state)? builder;
 
   const _NavItem({
@@ -90,7 +90,6 @@ class _NavItem {
     required this.label,
     required this.icon,
     required this.accent,
-    this.comingSoon = false,
     this.builder,
   });
 }
@@ -116,7 +115,10 @@ class _MenuPageState extends State<MenuPage> {
   List<Map<String, dynamic>> _pendingUsers = [];
   bool _loadingUser = true;
   bool _collapsed = false;
-  Set<String> _visibleGroups = {'dashboard', 'labels', 'chat', 'culture_collection', 'fish_facility', 'resources'};
+  Set<String> _visibleGroups = {'dashboard', 'labels', 'chat', 'requests', 'culture_collection', 'fish_facility', 'resources', 'reservations'};
+
+  // Items within a group that have their own individual visibility toggle in settings.
+  static const _perItemVisibilityKeys = {'reservations'};
   Timer? _connectivityTimer;
   bool _wasOffline = false;
 
@@ -148,6 +150,13 @@ class _MenuPageState extends State<MenuPage> {
       accent: const Color(0xFF22D3EE),
       builder: (_) => const LabChatPage(),
     ),
+    _NavItem(
+      id: 'requests',
+      label: 'Requests',
+      icon: Icons.outbox_outlined,
+      accent: const Color(0xFF8B5CF6),
+      builder: (_) => const RequestsPage(),
+    ),
   ];
 
   late final List<_NavGroup> _groups = [
@@ -170,7 +179,6 @@ class _MenuPageState extends State<MenuPage> {
           accent: const Color(0xFF3B82F6),
           builder: (_) => const SamplesPage(),
         ),
-        _NavItem(id: 'requests',       label: 'Requests',        icon: Icons.outbox_outlined,    accent: const Color(0xFF8B5CF6), comingSoon: true),
         _NavItem(id: 'sops_inventory', label: 'SOPs / Protocols', icon: Icons.menu_book_outlined, accent: const Color(0xFF06B6D4), builder: (_) => const SopPage(sopContext: 'culture_collection')),
       ],
     ),
@@ -201,7 +209,7 @@ class _MenuPageState extends State<MenuPage> {
       label: 'Admin',
       icon: Icons.admin_panel_settings_outlined,
       children: [
-        _NavItem(id: 'audit',    label: 'Audit Log', icon: Icons.manage_search_outlined, accent: const Color(0xFF6B7280), comingSoon: true),
+        _NavItem(id: 'audit',    label: 'Audit Log', icon: Icons.manage_search_outlined, accent: const Color(0xFF6B7280), builder: (_) => const AuditLogPage()),
         _NavItem(id: 'users',    label: 'Users',     icon: Icons.people_outlined,        accent: const Color(0xFF6366F1), builder: (_) => const UsersPage()),
         _NavItem(id: 'settings', label: 'Settings',  icon: Icons.settings_outlined,      accent: const Color(0xFF38BDF8), builder: (s) => SettingsPage(onSettingsChanged: s._reloadSettings)),
       ],
@@ -214,6 +222,7 @@ class _MenuPageState extends State<MenuPage> {
     _loadUserInfo();
     _loadVisibleGroups();
     LabChatPage.startBackgroundListener();
+    RequestsPage.startBackgroundListener();
     _startConnectivityTimer();
   }
 
@@ -456,7 +465,7 @@ class _MenuPageState extends State<MenuPage> {
         if (item.id == _selectedId && item.builder != null) {
           return _maybeWrapReadOnly(item.id, item.builder!(this));
         }
-        if (item.id == _selectedId && item.comingSoon) return _buildComingSoon(item);
+        if (item.id == _selectedId && item.builder == null) return _buildComingSoon(item);
       }
     }
     return _buildComingSoon(null);
@@ -570,6 +579,7 @@ class _MenuPageState extends State<MenuPage> {
                   ..._groups.where((g) => g.key == 'admin' ? _hasRole(userRole, 'admin') : _visibleGroups.contains(g.key)).map((group) {
                     final isExpanded = _expandedGroups.contains(group.label);
                     final anyAccessible = group.children.any((c) {
+                      if (_perItemVisibilityKeys.contains(c.id) && !_visibleGroups.contains(c.id)) return false;
                       final req = _moduleRequiredRole[c.id];
                       final roleOk = req == null || _hasRole(userRole, req);
                       return roleOk && _getModulePerm(c.id) != 'none';
@@ -586,7 +596,7 @@ class _MenuPageState extends State<MenuPage> {
                             padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                             child: Divider(color: Colors.white10, height: 1),
                           ),
-                          ...group.children.map((item) => _buildLeafTile(
+                          ...group.children.where((item) => !_perItemVisibilityKeys.contains(item.id) || _visibleGroups.contains(item.id)).map((item) => _buildLeafTile(
                             item: item,
                             collapsed: true,
                             isDrawer: isDrawer,
@@ -637,7 +647,7 @@ class _MenuPageState extends State<MenuPage> {
                               : CrossFadeState.showSecond,
                           firstChild: Column(
                             mainAxisSize: MainAxisSize.min,
-                            children: group.children.map((item) => _buildLeafTile(
+                            children: group.children.where((item) => !_perItemVisibilityKeys.contains(item.id) || _visibleGroups.contains(item.id)).map((item) => _buildLeafTile(
                               item: item,
                               collapsed: false,
                               isDrawer: isDrawer,
@@ -782,7 +792,7 @@ class _MenuPageState extends State<MenuPage> {
     Color textColor;
     if (selected)             { iconColor = item.accent;    textColor = Colors.white; }
     else if (blocked)         { iconColor = Colors.white12; textColor = Colors.white24; }
-    else if (item.comingSoon) { iconColor = Colors.white24; textColor = Colors.white38; }
+    else if (item.builder == null) { iconColor = Colors.white24; textColor = Colors.white38; }
     else if (isReadOnly)      { iconColor = Colors.white38; textColor = Colors.white54; }
     else                      { iconColor = Colors.white54; textColor = Colors.white70; }
 
@@ -797,7 +807,7 @@ class _MenuPageState extends State<MenuPage> {
             borderRadius: BorderRadius.circular(7),
             onTap: blocked
                 ? () => _showAccessDenied(item.id)
-                : item.comingSoon
+                : item.builder == null
                     ? null
                     : () => _select(item.id, isDrawer ? Navigator.of(context) : null),
             child: Padding(
@@ -835,7 +845,37 @@ class _MenuPageState extends State<MenuPage> {
                           ],
                         ),
                       )
-                    : Icon(blocked ? Icons.lock_outline : item.icon, size: 17, color: iconColor),
+                    : item.id == 'requests'
+                        ? ValueListenableBuilder<int>(
+                            valueListenable: RequestsPage.pendingNotifier,
+                            builder: (_, pending, _) => Stack(
+                              clipBehavior: Clip.none,
+                              children: [
+                                Icon(blocked ? Icons.lock_outline : item.icon, size: 17, color: iconColor),
+                                if (pending > 0)
+                                  Positioned(
+                                    top: -4, right: -6,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF8B5CF6),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Text(
+                                        pending > 99 ? '99+' : '$pending',
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 8,
+                                          fontWeight: FontWeight.w700,
+                                          height: 1.2,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          )
+                        : Icon(blocked ? Icons.lock_outline : item.icon, size: 17, color: iconColor),
                 if (!collapsed) ...[
                   const SizedBox(width: 8),
                   Expanded(
@@ -846,7 +886,7 @@ class _MenuPageState extends State<MenuPage> {
                           fontWeight: selected ? FontWeight.w600 : FontWeight.normal),
                     ),
                   ),
-                  if (item.comingSoon && !blocked)
+                  if (item.builder == null && !blocked)
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                       decoration: BoxDecoration(

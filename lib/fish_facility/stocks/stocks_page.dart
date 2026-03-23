@@ -13,7 +13,11 @@ import '../tanks/tanks_connection_model.dart';
 import '/theme/theme.dart';
 import '/theme/module_permission.dart';
 import '/theme/grid_widgets.dart';
+import 'package:qr_flutter/qr_flutter.dart';
+import '/supabase/supabase_manager.dart';
+import '/qr_scanner/qr_code_rules.dart';
 import '../add_stock_dialog.dart';
+import '../../requests/requests_page.dart';
 
 
 
@@ -398,6 +402,41 @@ class _FishStocksPageState extends State<FishStocksPage> {
     _applyFilters();
   }
 
+  void _showQr(FishStock stock) {
+    if (stock.id == null) return;
+    final ref = SupabaseManager.projectRef ?? 'local';
+    final data = QrRules.build(ref, 'fish_stocks', stock.id!);
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppDS.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        title: Text(stock.tankId,
+            style: GoogleFonts.spaceGrotesk(color: AppDS.textPrimary)),
+        content: SizedBox(
+          width: 260,
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Container(
+              color: Colors.white,
+              padding: const EdgeInsets.all(12),
+              child: QrImageView(data: data, size: 200),
+            ),
+            const SizedBox(height: 10),
+            Text(data,
+                style: GoogleFonts.spaceGrotesk(
+                    color: AppDS.textSecondary, fontSize: 11)),
+          ]),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('Close',
+                style: GoogleFonts.spaceGrotesk(color: AppDS.textSecondary))),
+        ],
+      ),
+    );
+  }
+
   Future<void> _openDetail(FishStock stock) async {
     await Navigator.push(context, MaterialPageRoute(
       builder: (_) => TankDetailPage(tank: ZebrafishTank(zebraTankId: stock.tankId)),
@@ -607,6 +646,24 @@ class _FishStocksPageState extends State<FishStocksPage> {
                 icon: Icons.open_in_new, tooltip: 'Open detail',
                 color: AppDS.textMuted,
                 onPressed: () => _openDetail(stock)),
+            ),
+            SizedBox(
+              width: 36,
+              child: AppIconButton(
+                icon: Icons.qr_code_outlined, tooltip: 'QR Code',
+                color: AppDS.textMuted,
+                onPressed: () => _showQr(stock)),
+            ),
+            SizedBox(
+              width: 36,
+              child: AppIconButton(
+                icon: Icons.outbox_outlined, tooltip: 'Quick Request',
+                color: AppDS.textMuted,
+                onPressed: () => showQuickRequestDialog(
+                  context,
+                  type: 'fish_eggs',
+                  prefillTitle: stock.line,
+                )),
             ),
             _cell(stock, 'tankId',      110, mono: true),
             _cell(stock, 'line',        140),

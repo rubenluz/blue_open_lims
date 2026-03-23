@@ -17,6 +17,7 @@ import '/core/data_cache.dart';
 import '/theme/theme.dart';
 import 'reagent_model.dart';
 import 'reagent_detail_page.dart';
+import '../../requests/requests_page.dart';
 
 part 'reagents_widgets.dart';
 
@@ -160,7 +161,7 @@ class _ReagentsPageState extends State<ReagentsPage> {
 
   void _showQr(ReagentModel r) {
     final ref = SupabaseManager.projectRef ?? 'local';
-    final data = 'bluelims://$ref/reagent/${r.id}';
+    final data = 'bluelims://$ref/reagents/${r.id}';
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -505,10 +506,14 @@ class _ReagentsPageState extends State<ReagentsPage> {
                               MaterialPageRoute(
                                 builder: (_) =>
                                     ReagentDetailPage(reagentId: r.id),
-                              ),
-                            ),
+                              )).then((_) => _load()),
                             onDelete: () => _delete(r),
                             onQr: () => _showQr(r),
+                            onRequest: () => showQuickRequestDialog(
+                              context,
+                              type: 'reagents',
+                              prefillTitle: r.name,
+                            ),
                           );
                         },
                       ),

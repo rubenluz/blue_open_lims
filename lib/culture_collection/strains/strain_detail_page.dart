@@ -3,9 +3,14 @@
 // Widget classes in strain_detail_widgets.dart (part).
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../samples/sample_detail_page.dart';
 import '/theme/theme.dart';
+import '/supabase/supabase_manager.dart';
+import '/qr_scanner/qr_code_rules.dart';
+import '../../requests/requests_page.dart';
 
 part 'strain_detail_widgets.dart';
 
@@ -283,6 +288,47 @@ class _StrainDetailPageState extends State<StrainDetailPage> {
     }
   }
 
+  void _showQrDialog(String data) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        title: Text(_data['strain_code']?.toString() ?? 'QR Code',
+            style: const TextStyle(fontSize: 15, color: _DS.titleColor)),
+        content: SizedBox(
+          width: 260,
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Container(
+            color: Colors.white,
+            padding: const EdgeInsets.all(12),
+            child: QrImageView(data: data, size: 200),
+          ),
+          const SizedBox(height: 10),
+          Text(data,
+              style: const TextStyle(
+                  fontSize: 10, color: _DS.labelColor, fontFamily: 'monospace'),
+              textAlign: TextAlign.center),
+        ]),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () async {
+              await Clipboard.setData(ClipboardData(text: data));
+              if (ctx.mounted) { Navigator.pop(ctx); }
+              if (mounted) { ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Copied to clipboard'))); }
+            },
+            child: const Text('Copy'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _showLastTransferDatePicker() async {
     final current = DateTime.tryParse(_ctrl['strain_last_transfer']?.text ?? '');
     DateTime selected = current ?? DateTime.now();
@@ -350,6 +396,19 @@ class _StrainDetailPageState extends State<StrainDetailPage> {
       if ((_data['strain_next_transfer']?.toString() ?? '').isEmpty) {
         _recomputeNextTransfer();
       }
+      // Ensure QR code is generated and follows app rules
+      final ref = SupabaseManager.projectRef ?? 'local';
+      final expectedQr = QrRules.build(ref, 'strains', int.parse(widget.strainId.toString()));
+      if (!QrRules.isValid(_data['strain_qrcode']?.toString() ?? '')) {
+        _data['strain_qrcode'] = expectedQr;
+        _ctrl['strain_qrcode']?.text = expectedQr;
+        Supabase.instance.client
+            .from('strains')
+            .update({'strain_qrcode': expectedQr})
+            .eq('strain_id', widget.strainId)
+            .then((_) {})
+            .catchError((_) {});
+      }
     } catch (e) {
       _snack('Error loading strain: $e');
     } finally {
@@ -367,6 +426,9 @@ class _StrainDetailPageState extends State<StrainDetailPage> {
           update[f.key] = v.isEmpty ? null : v;
         }
       }
+      // Always enforce correct QR code — never let it be nulled or hand-edited
+      final ref = SupabaseManager.projectRef ?? 'local';
+      update['strain_qrcode'] = QrRules.build(ref, 'strains', int.parse(widget.strainId.toString()));
       await Supabase.instance.client
           .from('strains')
           .update(update)
@@ -542,8 +604,23 @@ class _StrainDetailPageState extends State<StrainDetailPage> {
           PopupMenuButton<String>(
             icon: Icon(Icons.more_vert, color: context.appTextSecondary),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            onSelected: (v) { if (v == 'delete') _delete(); },
+            onSelected: (v) {
+              if (v == 'delete') _delete();
+              if (v == 'request') showQuickRequestDialog(
+                context,
+                type: 'strains',
+                prefillTitle: _data['strain_code']?.toString() ?? '',
+              );
+            },
             itemBuilder: (_) => [
+              const PopupMenuItem(
+                value: 'request',
+                child: ListTile(
+                  dense: true,
+                  leading: Icon(Icons.outbox_outlined, size: 18),
+                  title: Text('Quick Request', style: TextStyle(fontSize: 13)),
+                ),
+              ),
               const PopupMenuItem(
                 value: 'delete',
                 child: ListTile(
@@ -705,6 +782,15 @@ class _StrainDetailPageState extends State<StrainDetailPage> {
               ]),
             ),
           const SizedBox(width: 4),
+          IconButton(
+            icon: Icon(Icons.outbox_outlined, color: context.appTextSecondary),
+            tooltip: 'Quick Request',
+            onPressed: () => showQuickRequestDialog(
+              context,
+              type: 'strains',
+              prefillTitle: _data['strain_code']?.toString() ?? '',
+            ),
+          ),
           IconButton(
             icon: const Icon(Icons.delete_outline_rounded, color: Color(0xFFFC8181)),
             tooltip: 'Delete strain',
@@ -962,6 +1048,33 @@ class _StrainDetailPageState extends State<StrainDetailPage> {
           focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
               borderSide: const BorderSide(color: _DS.accent, width: 1.5)),
           contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        ),
+      );
+    }
+
+    if (f.key == 'strain_qrcode') {
+      return TextFormField(
+        controller: ctrl,
+        readOnly: true,
+        style: const TextStyle(fontSize: 11, color: _DS.labelColor, fontFamily: 'monospace'),
+        decoration: InputDecoration(
+          labelText: f.label,
+          labelStyle: const TextStyle(fontSize: 12, color: _DS.labelColor),
+          isDense: true,
+          filled: true,
+          fillColor: const Color(0xFFF8FAFC),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: _DS.cardBorder)),
+          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: _DS.cardBorder)),
+          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: _DS.cardBorder)),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          suffixIcon: IconButton(
+            icon: const Icon(Icons.qr_code_outlined, size: 18, color: _DS.accent),
+            tooltip: 'Show QR code',
+            onPressed: ctrl.text.isEmpty ? null : () => _showQrDialog(ctrl.text),
+          ),
         ),
       );
     }

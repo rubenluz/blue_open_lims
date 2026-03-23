@@ -138,6 +138,7 @@ CREATE TABLE IF NOT EXISTS samples (
 
     -- Logistics
     sample_photos            TEXT,
+    sample_qrcode            TEXT,
     sample_preservation      TEXT,
     sample_transport_time_h  NUMERIC,
 
@@ -601,6 +602,7 @@ CREATE TABLE IF NOT EXISTS fish_stocks (
     fish_stocks_ethics_approval        TEXT,
 
     fish_stocks_notes                  TEXT,
+    fish_stocks_qrcode                 TEXT,
 
     fish_stocks_created_at             TIMESTAMP DEFAULT NOW(),
     fish_stocks_updated_at             TIMESTAMP DEFAULT NOW()

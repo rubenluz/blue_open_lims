@@ -1,5 +1,5 @@
 #define MyAppName "BlueOpenLIMS"
-#define MyAppVersion "0.1.5"
+#define MyAppVersion "0.1.6"
 #define MyAppPublisher "Rúben Luz"
 #define MyAppExeName "culture_app.exe"
 

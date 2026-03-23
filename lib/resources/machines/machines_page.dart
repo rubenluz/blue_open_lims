@@ -157,7 +157,7 @@ class _MachinesPageState extends State<MachinesPage> {
 
   void _showQr(MachineModel m) {
     final ref = SupabaseManager.projectRef ?? 'local';
-    final data = 'bluelims://$ref/machine/${m.id}';
+    final data = 'bluelims://$ref/machines/${m.id}';
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -374,7 +374,7 @@ class _MachinesPageState extends State<MachinesPage> {
                           MaterialPageRoute(
                               builder: (_) =>
                                   MachineDetailPage(machineId: m.id)),
-                        ),
+                        ).then((_) => _load()),
                         onEdit: () => _showAddEditDialog(m),
                         onDelete: () => _delete(m),
                         onQr: () => _showQr(m),

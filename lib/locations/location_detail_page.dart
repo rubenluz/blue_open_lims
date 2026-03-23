@@ -171,8 +171,9 @@ class _LocationDetailPageState extends State<LocationDetailPage> {
   void _snack(String msg) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(msg),
+      content: Text(msg, style: const TextStyle(color: Colors.white)),
       behavior: SnackBarBehavior.floating,
+      backgroundColor: AppDS.surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
     ));
   }
@@ -215,10 +216,10 @@ class _LocationDetailPageState extends State<LocationDetailPage> {
                 : TextButton.icon(
                     onPressed: _save,
                     icon: const Icon(Icons.save_outlined,
-                        size: 16, color: Colors.white),
+                        size: 16, color: AppDS.accent),
                     label: Text('Save',
                         style:
-                            GoogleFonts.spaceGrotesk(color: Colors.white)),
+                            GoogleFonts.spaceGrotesk(color: AppDS.accent)),
                   ),
           ],
         ],
@@ -235,7 +236,7 @@ class _LocationDetailPageState extends State<LocationDetailPage> {
 
   Widget _buildBody(BuildContext context, LocationModel loc, Color accent) {
     final qrData =
-        'bluelims://${SupabaseManager.projectRef ?? 'local'}/location/${loc.id}';
+        'bluelims://${SupabaseManager.projectRef ?? 'local'}/locations/${loc.id}';
 
     return SingleChildScrollView(
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
@@ -584,7 +585,7 @@ class _LocationDetailPageState extends State<LocationDetailPage> {
 
   void _showQr(LocationModel loc) {
     final ref  = SupabaseManager.projectRef ?? 'local';
-    final data = 'bluelims://$ref/location/${loc.id}';
+    final data = 'bluelims://$ref/locations/${loc.id}';
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(

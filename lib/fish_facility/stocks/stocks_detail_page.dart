@@ -8,6 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../tanks/tanks_connection_model.dart';
 import '../lines/fish_lines_connection_model.dart';
 import '../lines/fish_lines_detail_page.dart';
+import '../../requests/requests_page.dart';
 
 // ─── Design tokens (mirrors strain_detail_page light theme) ──────────────────
 class _DS {
@@ -634,8 +635,22 @@ class _TankDetailPageState extends State<TankDetailPage> {
       PopupMenuButton<String>(
         icon: const Icon(Icons.more_vert, color: Colors.white70),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        onSelected: (v) { if (v == 'delete') _delete(); },
+        onSelected: (v) {
+          if (v == 'delete') _delete();
+          if (v == 'request') showQuickRequestDialog(
+            context,
+            type: 'fish_eggs',
+            prefillTitle: widget.tank.zebraLine ?? widget.tank.zebraTankId,
+          );
+        },
         itemBuilder: (_) => [
+          const PopupMenuItem(
+            value: 'request',
+            child: ListTile(
+              dense: true,
+              leading: Icon(Icons.outbox_outlined, size: 18),
+              title: Text('Quick Request', style: TextStyle(fontSize: 13)),
+            )),
           const PopupMenuItem(
             value: 'delete',
             child: ListTile(
@@ -691,6 +706,14 @@ class _TankDetailPageState extends State<TankDetailPage> {
         ],
       ),
       actions: [
+        IconButton(
+          icon: const Icon(Icons.outbox_outlined, size: 20, color: Colors.white70),
+          tooltip: 'Quick Request',
+          onPressed: () => showQuickRequestDialog(
+            context,
+            type: 'fish_eggs',
+            prefillTitle: widget.tank.zebraLine ?? widget.tank.zebraTankId,
+          )),
         IconButton(
           icon: const Icon(Icons.delete_outline_rounded,
               color: Color(0xFFFC8181), size: 20),

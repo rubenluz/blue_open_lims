@@ -10,12 +10,14 @@ class _ReagentRow extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback onDelete;
   final VoidCallback onQr;
+  final VoidCallback onRequest;
 
   const _ReagentRow({
     required this.reagent,
     required this.onTap,
     required this.onDelete,
     required this.onQr,
+    required this.onRequest,
   });
 
   static const _typeAccent = {
@@ -142,10 +144,11 @@ class _ReagentRow extends StatelessWidget {
             ),
             // ── Actions ──────────────────────────────────────────────────
             SizedBox(
-              width: 108,
+              width: 144,
               child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
                 _RowBtn(Icons.open_in_new, 'View detail', onTap),
                 _RowBtn(Icons.qr_code, 'QR Code', onQr),
+                _RowBtn(Icons.outbox_outlined, 'Quick Request', onRequest),
                 _RowBtn(Icons.delete_outline, 'Delete', onDelete,
                     color: AppDS.red.withValues(alpha: 0.7)),
               ]),

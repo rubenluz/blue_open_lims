@@ -19,6 +19,9 @@ import '../function_excel_import_page.dart';
 import 'samples_columns.dart';
 import 'samples_design_tokens.dart';
 import '/theme/theme.dart';
+import 'package:qr_flutter/qr_flutter.dart';
+import '/supabase/supabase_manager.dart';
+import '/qr_scanner/qr_code_rules.dart';
 
 part 'samples_widgets.dart';
 
@@ -367,6 +370,42 @@ class _SamplesPageState extends State<SamplesPage> {
     } catch (e) {
       _snack('Delete error: $e');
     }
+  }
+
+  void _showQr(Map<String, dynamic> row) {
+    final id = row['sample_id'];
+    if (id == null) return;
+    final ref = SupabaseManager.projectRef ?? 'local';
+    final data = QrRules.build(ref, 'samples', id as int);
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: ctx.appSurface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        title: Text(row['sample_code']?.toString() ?? 'QR Code',
+            style: GoogleFonts.spaceGrotesk(color: ctx.appTextPrimary)),
+        content: SizedBox(
+          width: 260,
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Container(
+              color: Colors.white,
+              padding: const EdgeInsets.all(12),
+              child: QrImageView(data: data, size: 200),
+            ),
+            const SizedBox(height: 10),
+            Text(data,
+                style: GoogleFonts.spaceGrotesk(
+                    color: ctx.appTextMuted, fontSize: 11)),
+          ]),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('Close',
+                style: GoogleFonts.spaceGrotesk(color: ctx.appTextSecondary))),
+        ],
+      ),
+    );
   }
 
   void _openDetail(Map<String, dynamic> row) {
@@ -796,7 +835,7 @@ class _SamplesPageState extends State<SamplesPage> {
     }
 
     final cols = _visibleCols;
-    final totalWidth = (_selectionMode ? AppDS.tableCheckW : 0.0) + AppDS.tableOpenW +
+    final totalWidth = (_selectionMode ? AppDS.tableCheckW : 0.0) + AppDS.tableOpenW * 2 +
         cols.fold(0.0, (s, c) => s + _colWidth(c));
 
     return Padding(
@@ -889,7 +928,7 @@ class _SamplesPageState extends State<SamplesPage> {
             activeColor: Colors.white, checkColor: context.appSurface,
             side: BorderSide(color: context.appHeaderText.withValues(alpha: 0.38), width: 1.5),
           ))),
-        SizedBox(width: AppDS.tableOpenW),
+        SizedBox(width: AppDS.tableOpenW * 2),
         ...List.generate(cols.length, (i) {
           final col      = cols[i];
           final isDrag   = _draggingColKey == col.key;
@@ -1010,17 +1049,27 @@ class _SamplesPageState extends State<SamplesPage> {
                 activeColor: AppDS.blue800,
               )),
             ),
-          // Open button
+          // Open / QR buttons
           Container(
-            width: AppDS.tableOpenW, height: AppDS.tableRowH, color: cellBase,
-            child: Center(child: IconButton(
-              icon: Icon(Icons.launch_rounded, size: 14,
-                  color: _selectionMode ? AppDS.textSecondary : AppDS.textSecondary),
-              tooltip: 'Open sample',
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-              onPressed: _selectionMode ? null : () => _openDetail(row),
-            )),
+            width: AppDS.tableOpenW * 2, height: AppDS.tableRowH, color: cellBase,
+            child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+              IconButton(
+                icon: Icon(Icons.launch_rounded, size: 14,
+                    color: _selectionMode ? AppDS.textSecondary : AppDS.textSecondary),
+                tooltip: 'Open sample',
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                onPressed: _selectionMode ? null : () => _openDetail(row),
+              ),
+              IconButton(
+                icon: Icon(Icons.qr_code_outlined, size: 14,
+                    color: _selectionMode ? AppDS.textSecondary : AppDS.textSecondary),
+                tooltip: 'QR Code',
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                onPressed: _selectionMode ? null : () => _showQr(row),
+              ),
+            ]),
           ),
           ...cols.map((col) => _buildDataCell(row, col, cellBase)),
         ]),

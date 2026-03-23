@@ -2,8 +2,6 @@
 // Excel import trigger, and navigation to StrainDetailPage.
 // Has its own Scaffold + AppBar (exception to the no-scaffold page rule).
 
-//TODO; check if next_trnasfer is being save in supabase or updated in supabase after cycle of last trasnfer is changed. Also check if next_trasnfer is empty this should be updated if cycle and las_transfer are filled, otherwise if infoormation for any of these is cleaned or missing, clean the nextr trasnfer info for that strains and dont updated on next time.
-
 
 import 'package:flutter/material.dart';
 import '/theme/module_permission.dart';
@@ -24,6 +22,7 @@ import '/theme/theme.dart';
 import 'strains_grid_widgets.dart';
 import 'strains_appbars.dart';
 import 'strains_toolbar.dart';
+import '../../requests/requests_page.dart';
 
 // ignore_for_file: use_build_context_synchronously
 
@@ -302,33 +301,50 @@ class _StrainsPageState extends State<StrainsPage> {
   }
 
   // Compares each strain's stored next_transfer against last_transfer+cycle.
-  // Updates Supabase (and local state) silently for any mismatches.
+  // Updates Supabase silently for mismatches; clears next_transfer when
+  // last_transfer or periodicity is missing.
   Future<void> _syncNextTransferDates() async {
-    final List<({String id, String date})> toFix = [];
+    final List<({String id, String date})> toFix   = [];
+    final List<String>                     toClear = [];
     for (final row in _rows) {
-      final lastStr = row['strain_last_transfer']?.toString() ?? '';
-      final days    = int.tryParse(row['strain_periodicity']?.toString() ?? '');
-      if (lastStr.isEmpty || days == null) continue;
+      final lastStr    = row['strain_last_transfer']?.toString() ?? '';
+      final days       = int.tryParse(row['strain_periodicity']?.toString() ?? '');
+      final currentNext = row['strain_next_transfer']?.toString() ?? '';
+      if (lastStr.isEmpty || days == null) {
+        if (currentNext.isNotEmpty) {
+          row['strain_next_transfer']    = null;
+          row['_next_transfer_computed'] = false;
+          toClear.add(row['strain_id'].toString());
+        }
+        continue;
+      }
       DateTime computed;
       try { computed = DateTime.parse(lastStr).add(Duration(days: days)); }
       catch (_) { continue; }
       final expected = '${computed.year.toString().padLeft(4, '0')}-'
           '${computed.month.toString().padLeft(2, '0')}-'
           '${computed.day.toString().padLeft(2, '0')}';
-      if ((row['strain_next_transfer']?.toString() ?? '') == expected) continue;
-      row['strain_next_transfer']   = expected;
+      if (currentNext == expected) continue;
+      row['strain_next_transfer']    = expected;
       row['_next_transfer_computed'] = false;
       toFix.add((id: row['strain_id'].toString(), date: expected));
     }
-    if (toFix.isEmpty) return;
+    if (toFix.isEmpty && toClear.isEmpty) return;
     try {
-      await Future.wait(toFix.map((u) => Supabase.instance.client
-          .from('strains')
-          .update({'strain_next_transfer': u.date})
-          .eq('strain_id', u.id)));
+      await Future.wait([
+        ...toFix.map((u) => Supabase.instance.client
+            .from('strains')
+            .update({'strain_next_transfer': u.date})
+            .eq('strain_id', u.id)),
+        ...toClear.map((id) => Supabase.instance.client
+            .from('strains')
+            .update({'strain_next_transfer': null})
+            .eq('strain_id', id)),
+      ]);
       if (mounted) {
         _applyFilter();
-        _snack('Synced ${toFix.length} transfer date${toFix.length != 1 ? 's' : ''}');
+        final total = toFix.length + toClear.length;
+        _snack('Synced $total transfer date${total != 1 ? 's' : ''}');
       }
     } catch (e) {
       if (mounted) _snack('Error syncing transfer dates: $e');
@@ -423,9 +439,30 @@ class _StrainsPageState extends State<StrainsPage> {
   Future<void> _commitEdit(Map<String, dynamic> row, String key, String value) async {
     final id = row['strain_id'];
     try {
+      final Map<String, dynamic> patch = {key: value.isEmpty ? null : value};
+      if (key == 'strain_last_transfer' || key == 'strain_periodicity') {
+        final lastStr = key == 'strain_last_transfer'
+            ? value
+            : (row['strain_last_transfer']?.toString() ?? '');
+        final daysStr = key == 'strain_periodicity'
+            ? value
+            : (row['strain_periodicity']?.toString() ?? '');
+        final days = int.tryParse(daysStr);
+        String? nextDate;
+        if (lastStr.isNotEmpty && days != null) {
+          final last = DateTime.tryParse(lastStr);
+          if (last != null) {
+            final next = last.add(Duration(days: days));
+            nextDate = '${next.year.toString().padLeft(4, '0')}-'
+                '${next.month.toString().padLeft(2, '0')}-'
+                '${next.day.toString().padLeft(2, '0')}';
+          }
+        }
+        patch['strain_next_transfer'] = nextDate;
+      }
       await Supabase.instance.client
           .from('strains')
-          .update({key: value.isEmpty ? null : value})
+          .update(patch)
           .eq('strain_id', id);
       final idx = _rows.indexWhere((r) => r['strain_id'] == id);
       if (idx != -1) {
@@ -829,7 +866,7 @@ class _StrainsPageState extends State<StrainsPage> {
     }
     final cols = _visibleCols;
     final totalWidth = (_selectionMode ? AppDS.tableCheckW : 0.0) +
-        AppDS.tableOpenW + cols.fold(0.0, (s, c) => s + _colWidth(c));
+        AppDS.tableOpenW * 2 + cols.fold(0.0, (s, c) => s + _colWidth(c));
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 0, 12, 4),
@@ -926,7 +963,7 @@ class _StrainsPageState extends State<StrainsPage> {
             activeColor: AppDS.accent, checkColor: Colors.white,
             side: BorderSide(color: context.appBorder2, width: 1.5),
           ))),
-        SizedBox(width: AppDS.tableOpenW),
+        SizedBox(width: AppDS.tableOpenW * 2),
         ...List.generate(cols.length, (i) {
           final col = cols[i];
           return Row(mainAxisSize: MainAxisSize.min, children: [
@@ -1053,14 +1090,27 @@ class _StrainsPageState extends State<StrainsPage> {
                   value: isSelected, onChanged: (_) => _toggleRowSelection(row['strain_id']),
                   visualDensity: VisualDensity.compact, activeColor: AppDS.blue800,
                 ))),
-          Container(width: AppDS.tableOpenW, height: AppDS.tableRowH, color: cellBase,
-              child: Center(child: IconButton(
-                icon: Icon(Icons.launch_rounded, size: 14,
-                    color: _selectionMode ? AppDS.textSecondary : AppDS.textSecondary),
-                tooltip: 'Open strain', padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                onPressed: _selectionMode ? null : () => _openDetail(row),
-              ))),
+          Container(width: AppDS.tableOpenW * 2, height: AppDS.tableRowH, color: cellBase,
+              child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                IconButton(
+                  icon: Icon(Icons.launch_rounded, size: 14,
+                      color: _selectionMode ? AppDS.textSecondary : AppDS.textSecondary),
+                  tooltip: 'Open strain', padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                  onPressed: _selectionMode ? null : () => _openDetail(row),
+                ),
+                IconButton(
+                  icon: Icon(Icons.outbox_outlined, size: 14,
+                      color: _selectionMode ? AppDS.textSecondary : AppDS.textSecondary),
+                  tooltip: 'Quick Request', padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                  onPressed: _selectionMode ? null : () => showQuickRequestDialog(
+                    context,
+                    type: 'strains',
+                    prefillTitle: row['strain_code']?.toString() ?? '',
+                  ),
+                ),
+              ])),
           ...cols.map((col) => _buildDataCell(row, col, cellBase)),
         ]),
       ),

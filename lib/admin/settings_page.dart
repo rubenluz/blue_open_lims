@@ -30,9 +30,11 @@ class _SettingsPageState extends State<SettingsPage> {
     _GroupDef('dashboard',          'Dashboard',          Icons.space_dashboard_outlined,   'Overview panels and summary widgets'),
     _GroupDef('labels',             'Labels',             Icons.label_outline_rounded,       'Label template builder and printer'),
     _GroupDef('chat',               'Chat',               Icons.forum_outlined,              'Lab team messaging'),
+    _GroupDef('requests',           'Requests',           Icons.outbox_outlined,             'Lab supply and strain requests'),
     _GroupDef('culture_collection', 'Culture Collection', Icons.inventory_2_outlined,        'Strains, samples, requests and SOPs'),
     _GroupDef('fish_facility',      'Fish Facility',      Icons.water_outlined,              'Fish stock, tank map, lines and SOPs'),
     _GroupDef('resources',          'Resources',          Icons.category_outlined,           'Reagents, equipment and reservations'),
+    _GroupDef('reservations',       'Reservations',       Icons.event_outlined,               'Equipment reservation calendar'),
   ];
 
   Set<String> _enabled = {};
