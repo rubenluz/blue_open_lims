@@ -46,8 +46,17 @@ class _PrintLabelPageState extends State<_PrintLabelPage> {
     _ => null,
   };
 
+  String? get _sortCol => switch (widget.entityType) {
+    'Strains'   => 'strain_code',
+    'Reagents'  => 'reagent_code',
+    'Equipment' => 'eq_code',
+    'Samples'   => 'sample_code',
+    'Stocks'    => 'fish_stocks_tank_id',
+    _ => null,
+  };
+
   List<Map<String, dynamic>> get _displayRecords {
-    var list = _records;
+    var list = _records.toList();
     if (_search.isNotEmpty) {
       final q = _search.toLowerCase();
       list = list
@@ -60,6 +69,11 @@ class _PrintLabelPageState extends State<_PrintLabelPage> {
       if (col != null) {
         list = list.where((r) => r[col]?.toString() == _statusFilter).toList();
       }
+    }
+    final sc = _sortCol;
+    if (sc != null) {
+      list.sort((a, b) =>
+          (a[sc]?.toString() ?? '').compareTo(b[sc]?.toString() ?? ''));
     }
     return list;
   }
@@ -553,7 +567,7 @@ class _RecordList extends StatelessWidget {
 
   String _recordSubLabel(Map<String, dynamic> r) {
     for (final k in [
-      'strain_species', 'reagent_name', 'eq_name', 'sample_type',
+      'strain_scientific_name', 'reagent_name', 'eq_name', 'sample_type',
       'fish_stocks_line', 'name', 'type',
     ]) {
       final v = r[k];
